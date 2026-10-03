@@ -1,0 +1,30 @@
+{
+  "name": "@mercuryworkshop/proxy-bootstrap",
+  "version": "0.0.5",
+  "type": "module",
+  "main": "./dist/bootstrap-server.js",
+  "types": "./dist/types/typesEntry.d.ts",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MercuryWorkshop/scramjet.git",
+    "directory": "packages/bootstrap"
+  },
+  "dependencies": {
+    "@mercuryworkshop/wisp-js": "0.4.1",
+    "tar": "^7.5.1"
+  },
+  "devDependencies": {
+    "@mercuryworkshop/epoxy-transport": "3.0.1",
+    "@mercuryworkshop/libcurl-transport": "2.0.5",
+    "@mercuryworkshop/proxy-transports": "1.0.2",
+    "@mercuryworkshop/scramjet-controller": "0.0.13"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "cd ../.. && rspack build --mode production --configName scramjet-bootstrap",
+    "pub": "pnpm publish --no-git-checks --access public"
+  }
+}

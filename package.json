@@ -1,0 +1,19 @@
+{
+	"name": "polaris",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"start": "node server.js",
+		"dev": "node server.js"
+	},
+	"dependencies": {
+		"@mercuryworkshop/proxy-bootstrap": "*",
+		"express": "^4.21.2"
+	},
+	"devDependencies": {
+		"@mercuryworkshop/scramjet": "^2.0.67-alpha.2",
+		"@mercuryworkshop/scramjet-controller": "*",
+		"@mercuryworkshop/scramjet-utils": "*"
+	}
+}
