@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Baldi's FieldTrip Demo</title>
+
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #231F20;
+    }
+
+    #unity-container {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #unity-canvas {
+      display: block;
+      width: 100vw !important;
+      height: 100vh !important;
+      background: #231F20;
+    }
+
+    #unity-loading-bar {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    #unity-logo {
+      width: 154px;
+      height: 130px;
+      background: url("https://quizizz.com/_media/uploads/9807c23d-beac-4b23-abf5-df1fb772840a-v2") center no-repeat;
+    }
+
+    #unity-progress-bar-empty {
+      width: 141px;
+      height: 18px;
+      margin: 10px 0 0 6.5px;
+      background: url("https://quizizz.com/_media/uploads/ea096e62-fdf6-4323-92a5-4f95b4be9f44-v2") center no-repeat;
+    }
+
+    #unity-progress-bar-full {
+      width: 0;
+      height: 18px;
+      background: url("https://quizizz.com/_media/uploads/5b6f867a-44a5-4b79-af87-565d99dd2c2d-v2") center no-repeat;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="unity-container">
+    <canvas id="unity-canvas" width="960" height="600" tabindex="-1"></canvas>
+
+    <div id="unity-loading-bar">
+      <div id="unity-logo"></div>
+      <div id="unity-progress-bar-empty">
+        <div id="unity-progress-bar-full"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("unity-canvas");
+    const loadingBar = document.getElementById("unity-loading-bar");
+    const progressBar = document.getElementById("unity-progress-bar-full");
+
+    const config = {
+      dataUrl:
+        "https://quizizz.com/_media/uploads/b7faa50c-0920-433e-a8dd-af48021a1eab-v2",
+
+      frameworkUrl:
+        "https://quizizz.com/_media/uploads/6b2d2f12-8677-4c8e-b00e-b93f4267fc51-v2",
+
+      codeUrl:
+        "https://quizizz.com/_media/uploads/23984f7e-793e-417f-b6b7-b19fce7f08cd-v2",
+
+      streamingAssetsUrl: "StreamingAssets",
+
+      companyName: "Baldi's Field Trip Demo",
+      productName: "Baldi's FieldTrip Demo",
+      productVersion: "1.1"
+    };
+
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      config.devicePixelRatio = 1;
+    }
+
+    const script = document.createElement("script");
+
+    script.src =
+      "https://quizizz.com/_media/uploads/ec4ef11e-8d33-4f6b-aedf-1a46b253d517-v2";
+
+    script.onload = () => {
+      createUnityInstance(canvas, config, progress => {
+        progressBar.style.width = `${progress * 100}%`;
+      })
+      .then(() => {
+        loadingBar.style.display = "none";
+      })
+      .catch(error => {
+        loadingBar.style.display = "none";
+        console.error(error);
+        alert(error);
+      });
+    };
+
+    script.onerror = () => {
+      loadingBar.style.display = "none";
+      alert("Failed to load the Unity WebGL loader.");
+    };
+
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>

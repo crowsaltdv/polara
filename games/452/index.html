@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
+  <title>Unity WebGL Player | JOJORUNE - VS Dio</title>
+
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
+    #unity-canvas {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      display: block;
+      object-fit: contain;
+    }
+
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    #loading-title {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    #loading-text {
+      font-size: 16px;
+      color: #aaa;
+      margin-bottom: 12px;
+    }
+
+    #progress-container {
+      width: min(500px, 80vw);
+      height: 12px;
+      background: #222;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    #progress-bar {
+      width: 0%;
+      height: 100%;
+      background: #fff;
+      transition: width 0.2s ease;
+    }
+
+    #loading-percent {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #888;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="loading-screen">
+    <div id="loading-title">JOJORUNE - VS Dio</div>
+    <div id="loading-text">Loading game...</div>
+
+    <div id="progress-container">
+      <div id="progress-bar"></div>
+    </div>
+
+    <div id="loading-percent">0%</div>
+  </div>
+
+  <canvas
+    id="unity-canvas"
+    width="1280"
+    height="720"
+    tabindex="-1">
+  </canvas>
+
+  <script src="https://quizizz.com/_media/uploads/19b2969a-c124-4509-b0f0-45eb40026a17-v2"></script>
+
+  <script>
+    var loadingScreen = document.getElementById("loading-screen");
+    var loadingText = document.getElementById("loading-text");
+    var progressBar = document.getElementById("progress-bar");
+    var loadingPercent = document.getElementById("loading-percent");
+
+    createUnityInstance(document.querySelector("#unity-canvas"), {
+      dataUrl: "https://quizizz.com/_media/uploads/b9296277-1df3-4647-a0d7-208e8cb59a56-v2",
+      frameworkUrl: "https://quizizz.com/_media/uploads/2e253ae2-2678-4757-a05c-4a3a63cb3d05-v2",
+      codeUrl: "https://quizizz.com/_media/uploads/2925d541-0873-4840-81ff-9f94a08798a5-v2",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "DefaultCompany",
+      productName: "JOJORUNE - VS Dio",
+      productVersion: "1.0"
+    }, function(progress) {
+      var percent = Math.round(progress * 100);
+
+      progressBar.style.width = percent + "%";
+      loadingPercent.textContent = percent + "%";
+
+      if (percent >= 100) {
+        loadingText.textContent = "Starting game...";
+      } else {
+        loadingText.textContent = "Loading game...";
+      }
+    }).then(function() {
+      progressBar.style.width = "100%";
+      loadingPercent.textContent = "100%";
+      loadingText.textContent = "Starting game...";
+
+      setTimeout(function() {
+        loadingScreen.style.transition = "opacity 0.5s ease";
+        loadingScreen.style.opacity = "0";
+
+        setTimeout(function() {
+          loadingScreen.remove();
+        }, 500);
+      }, 300);
+    }).catch(function(error) {
+      loadingText.textContent = "Failed to load game";
+      loadingPercent.textContent = error;
+      progressBar.style.background = "#e53935";
+    });
+  </script>
+</body>
+</html>
