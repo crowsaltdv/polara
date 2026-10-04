@@ -28,9 +28,10 @@ export function securityHeaders(req, res, next) {
 	res.set({
 		"Referrer-Policy": "no-referrer",
 		"Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
-		// block <object>/<embed> plugins and <base> hijacking; everything else stays open because games and the proxy need it
-		"Content-Security-Policy": "object-src 'none'; base-uri 'self'",
 	});
+	// block <object>/<embed> plugins and <base> hijacking; everything else stays open because games and the proxy need it.
+	// Game pages are left out: most of them are tiny wrappers that load the game from a CDN through <base href>.
+	if (!req.path.startsWith("/games/")) res.set("Content-Security-Policy", "object-src 'none'; base-uri 'self'");
 	if (req.path.startsWith("/api/")) {
 		res.set({ "X-Content-Type-Options": "nosniff", "Cache-Control": "no-store" });
 	}

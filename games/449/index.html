@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <title>Unity WebGL Player | birthday bash</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000;
+      overflow: hidden;
+    }
+
+    #load {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 320px;
+      text-align: center;
+      color: #fff;
+      font: 14px Arial;
+      z-index: 10;
+    }
+
+    #text {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    #bar {
+      height: 16px;
+      background: #222;
+      border: 1px solid #555;
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 12px 0 8px;
+    }
+
+    #fill {
+      width: 0%;
+      height: 100%;
+      background: #3b9dff;
+      transition: width 0.15s linear;
+    }
+
+    #info {
+      color: #aaa;
+      font-size: 12px;
+    }
+
+    #unity-canvas {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    #unity-mobile-warning {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff;
+      background: rgba(0, 0, 0, 0.9);
+      padding: 20px;
+      border-radius: 8px;
+      font: 14px Arial;
+      z-index: 20;
+    }
+  </style>
+</head>
+<body>
+  <div id="unity-mobile-warning">WebGL not supported on mobile</div>
+
+  <div id="load">
+    <div id="text">Loading</div>
+    <div id="bar"><div id="fill"></div></div>
+    <div id="info">0 MB / 0 MB</div>
+  </div>
+
+  <canvas id="unity-canvas"></canvas>
+
+  <script>
+    const base = "https://cdn.jsdelivr.net/gh/woahhcrackers/BirthdayBashWeb@main/Build/";
+    const name = "BirthdayBashWeb";
+    const $ = id => document.getElementById(id);
+    const fmt = b => (b / 1048576).toFixed(2) + " MB";
+
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      const m = document.createElement("meta");
+      m.name = "viewport";
+      m.content = "width=device-width,height=device-height,initial-scale=1,user-scalable=no";
+      document.head.appendChild(m);
+      $("unity-mobile-warning").style.display = "block";
+      setTimeout(() => $("unity-mobile-warning").style.display = "none", 5000);
+    }
+
+    const head = async u => {
+      try {
+        const r = await fetch(u, { method: "HEAD" });
+        return r.ok ? parseInt(r.headers.get("content-length") || "0", 10) : -1;
+      } catch {
+        return -1;
+      }
+    };
+
+    const listParts = async ext => {
+      const out = [];
+      for (let i = 1; i < 100; i++) {
+        const p = `${base}${name}.${ext}.${String(i).padStart(3, "0")}`;
+        const size = await head(p);
+        if (size < 0) break;
+        out.push({ url: p, size });
+      }
+      return out;
+    };
+
+    const state = { loaded: 0, total: 43.03 * 1048576 };
+
+    const updateBar = () => {
+      const pct = Math.min(100, state.loaded / state.total * 100);
+      $("fill").style.width = pct + "%";
+      $("info").textContent = fmt(state.loaded) + " / " + fmt(state.total);
+    };
+
+    const download = async url => {
+      const r = await fetch(url);
+      const reader = r.body.getReader();
+      const chunks = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        state.loaded += value.length;
+        updateBar();
+      }
+      return new Blob(chunks);
+    };
+
+    const downloadAll = async items => {
+      const bufs = [];
+      for (const it of items) bufs.push(await download(it.url));
+      return new Blob(bufs);
+    };
+
+    (async () => {
+      updateBar();
+
+      let dataUrl = `${base}${name}.data`;
+      let dataSize = await head(dataUrl);
+      let dataParts = null;
+
+      if (dataSize < 0) {
+        dataParts = await listParts("data");
+      }
+
+      let wasmUrl = `${base}${name}.wasm`;
+      let wasmSize = await head(wasmUrl);
+      let wasmParts = null;
+
+      if (wasmSize < 0) {
+        wasmParts = await listParts("wasm");
+      }
+
+      const dataBlob = dataParts ? await downloadAll(dataParts) : await download(dataUrl);
+      const wasmBlob = wasmParts ? await downloadAll(wasmParts) : await download(wasmUrl);
+
+      $("text").textContent = "Starting...";
+
+      const sc = document.createElement("script");
+      sc.src = `${base}${name}.loader.js`;
+      sc.onload = () => {
+        createUnityInstance($("unity-canvas"), {
+          dataUrl: URL.createObjectURL(dataBlob),
+          frameworkUrl: `${base}${name}.framework.js`,
+          codeUrl: URL.createObjectURL(wasmBlob),
+          streamingAssetsUrl: "StreamingAssets",
+          companyName: "crackers",
+          productName: name,
+          productVersion: "1.0"
+        }).then(() => $("load").remove()).catch(console.error);
+      };
+      document.body.appendChild(sc);
+    })();
+  </script>
+</body>
+</html>
