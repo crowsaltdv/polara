@@ -195,6 +195,11 @@ app.get("/api/img", rateLimit({ windowMs: 60e3, max: 40 }), async (req, res) => 
 
 // ---- static files: only the site itself is public (never server code, data, dotfiles or package files) ----
 const PUBLIC = /^\/(?:$|index\.html$|games\.js$|robots\.txt$|games\/|vendor\/)/;
+// a few emulator games (Pokemon, Zelda, Metroid, ...) load the shared EmulatorJS files from /emulatorjs/ instead of next to themselves
+app.use((req, res, next) => {
+	if (req.url.startsWith("/emulatorjs/")) req.url = "/games" + req.url;
+	next();
+});
 app.use((req, res, next) => (PUBLIC.test(req.path) ? next() : res.status(404).end()));
 app.use(
 	express.static(import.meta.dirname, {
