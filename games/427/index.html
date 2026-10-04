@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>$PRUNK1.M$1</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+    #loading-container {
+      width: min(420px, 80vw);
+      text-align: center;
+    }
+    #loading-status {
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+    #loading-bar {
+      width: 100%;
+      height: 22px;
+      appearance: none;
+    }
+    #loading-bar::-webkit-progress-bar {
+      background: #333;
+      border-radius: 6px;
+    }
+    #loading-bar::-webkit-progress-value {
+      background: #4caf50;
+      border-radius: 6px;
+      transition: width 0.15s ease;
+    }
+    #loading-bar::-moz-progress-bar {
+      background: #4caf50;
+      border-radius: 6px;
+    }
+    #loading-details {
+      margin-top: 8px;
+      color: #aaa;
+      font-size: 14px;
+    }
+    /* Used when the CDN does not provide Content-Length. */
+    #loading-bar.indeterminate {
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-container">
+    <div id="loading-status" role="status" aria-live="polite">
+      Preparing content...
+    </div>
+    <progress id="loading-bar" value="0" max="100">
+      Loading...
+    </progress>
+    <div id="loading-details">
+      0.00 MB / calculating total...
+    </div>
+  </div>
+  <script>
+    async function loadAndRun() {
+      const status = document.getElementById("loading-status");
+      const progressBar = document.getElementById("loading-bar");
+      const details = document.getElementById("loading-details");
+      const urls = [
+        "https://cdn.jsdelivr.net/gh/iamthegamesofsprunk/stuff-that-skibidi@main/sprunk-msi/SPRUNKI.MSI%20(New%20Update).html.part1",
+        "https://cdn.jsdelivr.net/gh/iamthegamesofsprunk/stuff-that-skibidi@main/sprunk-msi/SPRUNKI.MSI%20(New%20Update).html.part2"
+      ];
+      const bytesPerMB = 1024 * 1024;
+      let loadedBytes = 0;
+      let totalBytes = 0;
+      let totalKnown = true;
+      let fullHtml = "";
+      function formatMB(bytes) {
+        return (bytes / bytesPerMB).toFixed(2);
+      }
+      function updateProgress() {
+        const loadedMB = formatMB(loadedBytes);
+        if (totalKnown && totalBytes > 0) {
+          const totalMB = formatMB(totalBytes);
+          const percentage = Math.min(
+            100,
+            (loadedBytes / totalBytes) * 100
+          );
+          progressBar.classList.remove("indeterminate");
+          progressBar.max = totalBytes;
+          progressBar.value = loadedBytes;
+          details.textContent =
+            `${loadedMB} MB / ${totalMB} MB (${percentage.toFixed(0)}%)`;
+        } else {
+          progressBar.classList.add("indeterminate");
+          progressBar.removeAttribute("value");
+          details.textContent =
+            `${loadedMB} MB loaded / total size unavailable`;
+        }
+      }
+      async function readResponse(response) {
+        if (!response.body) {
+          const text = await response.text();
+          loadedBytes += new TextEncoder().encode(text).byteLength;
+          updateProgress();
+          return text;
+        }
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let text = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            break;
+          }
+          loadedBytes += value.byteLength;
+          text += decoder.decode(value, { stream: true });
+          updateProgress();
+        }
+        text += decoder.decode();
+        return text;
+      }
+      try {
+        status.textContent = "Connecting to content server...";
+        // Fetch the headers first so the total MB can be calculated.
+        const responses = await Promise.all(
+          urls.map(async (url) => {
+            const response = await fetch(url);
+            if (!response.ok) {
+              throw new Error(`Request failed with status ${response.status}`);
+            }
+            return response;
+          })
+        );
+        for (const response of responses) {
+          const contentLength = response.headers.get("content-length");
+          if (contentLength) {
+            totalBytes += Number(contentLength);
+          } else {
+            totalKnown = false;
+          }
+        }
+        updateProgress();
+        for (let i = 0; i < responses.length; i++) {
+          status.textContent =
+            `Loading content part ${i + 1} of ${responses.length}...`;
+          fullHtml += await readResponse(responses[i]);
+        }
+        status.textContent = "Assembling content...";
+        updateProgress();
+        document.open();
+        document.write(fullHtml);
+        document.close();
+      } catch (error) {
+        status.textContent = "Unable to load content.";
+        details.textContent = "Please refresh the page and try again.";
+        progressBar.classList.add("indeterminate");
+        console.error("Content loading failed:", error);
+      }
+    }
+    loadAndRun();
+  </script>
+</body>
+</html>
