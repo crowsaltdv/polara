@@ -5,17 +5,26 @@ import Raindrops from "./raindrops.js";
 import RainRenderer from "./rain-renderer.js";
 import createCanvas from "./create-canvas.js";
 
-function loadImg(src) {
+function loadImg(src, cors = false) {
 	return new Promise((resolve, reject) => {
 		const img = new Image();
+		if (cors) img.crossOrigin = "anonymous";
 		img.onload = () => resolve(img);
 		img.onerror = () => reject(new Error("image failed to load"));
 		img.src = src;
 	});
 }
 
-// remote images go through the server so WebGL is allowed to read them
-const viaServer = (u) => (/^https?:/i.test(u) ? "/api/img?u=" + encodeURIComponent(u) : u);
+// WebGL may only read images that allow it (CORS). Try the image directly first; only if its host refuses do we
+// fetch it through our own server, which keeps the bandwidth off your hosting whenever possible.
+async function loadPicture(url) {
+	if (!/^https?:/i.test(url)) return loadImg(url);
+	try {
+		return await loadImg(url, true);
+	} catch {
+		return loadImg("/api/img?u=" + encodeURIComponent(url));
+	}
+}
 
 function makeTextures(img, blur) {
 	const ratio = img.naturalHeight / img.naturalWidth;
@@ -109,7 +118,7 @@ export function createRainFx(canvas) {
 
 	api.setScene = async (url, blur) => {
 		await loadDropArt();
-		const img = await loadImg(viaServer(url));
+		const img = await loadPicture(url);
 		const { fg, bg } = makeTextures(img, blur || 0);
 		const want = Math.round(window.innerWidth * Math.min(window.devicePixelRatio || 1, 1.25)) + "x" +
 			Math.round(window.innerHeight * Math.min(window.devicePixelRatio || 1, 1.25));

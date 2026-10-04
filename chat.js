@@ -7,68 +7,147 @@ import express from "express";
 const scrypt = promisify(crypto.scrypt);
 
 export const CHANNELS = ["general", "links"];
-const DIR = path.join(import.meta.dirname, "data");
-const FILE = path.join(DIR, "chat.json");
-const KEEP = 300; // messages kept per channel
+// On a host, point POLARIS_DATA_DIR at a persistent disk/volume so accounts and messages survive restarts and redeploys.
+const DIR = process.env.POLARIS_DATA_DIR || path.join(import.meta.dirname, "data");
+const FILE = path.join(DIR, "chat.json"); // accounts and login sessions
+const MSG_FILE = path.join(DIR, "messages.jsonl"); // every message ever sent, one per line, only ever appended to
+const MEMORY_PER_CHANNEL = 50000; // newest messages kept ready in memory (older ones stay in the file)
 const SESSION_MS = 30 * 24 * 3600 * 1000;
-const MAX_USERS = 20000;
-const MAX_SESSIONS_PER_USER = 8;
-const MAX_STREAMS_PER_USER = 4;
-const MAX_STREAMS_PER_IP = 12;
+const MAX_USERS = 100000;
+const MAX_STREAMS_TOTAL = 20000;
+const MAX_TEXT = 2000;
 // names that could be mistaken for staff or the system
 const RESERVED = /^(admin|administrator|mod|moderator|staff|support|system|polaris|owner|official|root|server|bot|null|undefined)$/i;
 // control characters and invisible/bidirectional-override characters used to spoof or break layouts
-const JUNK = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF]/g;
+const JUNK = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F​-‏‪-‮⁠-⁤⁦-⁩﻿]/g;
 const cleanText = (s) => s.replace(JUNK, "").replace(/\n{3,}/g, "\n\n").trim();
 
-let db = { users: {}, sessions: {}, messages: {} };
-try {
-	db = { ...db, ...JSON.parse(fs.readFileSync(FILE, "utf8")) };
-} catch {}
-for (const c of CHANNELS) db.messages[c] ||= [];
+fs.mkdirSync(DIR, { recursive: true });
+
+// ---------- loading ----------
+const readJson = (file) => {
+	try {
+		return JSON.parse(fs.readFileSync(file, "utf8"));
+	} catch {
+		return null;
+	}
+};
+let saved = readJson(FILE);
+if (!saved && fs.existsSync(FILE)) {
+	// the file is damaged: keep a copy for inspection and fall back to the last good backup instead of starting empty
+	try {
+		fs.copyFileSync(FILE, `${FILE}.corrupt-${Date.now()}`);
+	} catch {}
+	saved = readJson(FILE + ".bak");
+	console.error("chat.json was unreadable; restored from chat.json.bak" + (saved ? "" : " (no usable backup found)"));
+}
+const db = { users: saved?.users || {}, sessions: saved?.sessions || {} };
+const messages = Object.fromEntries(CHANNELS.map((c) => [c, []]));
+
+// messages: the append-only log (older versions kept them inside chat.json, so those are carried over once)
+function loadMessages() {
+	if (fs.existsSync(MSG_FILE)) {
+		for (const line of fs.readFileSync(MSG_FILE, "utf8").split("\n")) {
+			if (!line) continue;
+			try {
+				const m = JSON.parse(line);
+				if (messages[m.ch]) messages[m.ch].push(m);
+			} catch {}
+		}
+	} else if (saved?.messages) {
+		const lines = [];
+		for (const ch of CHANNELS) {
+			for (const m of saved.messages[ch] || []) {
+				messages[ch].push(m);
+				lines.push(JSON.stringify(m));
+			}
+		}
+		if (lines.length) fs.writeFileSync(MSG_FILE, lines.join("\n") + "\n");
+	}
+	for (const ch of CHANNELS) {
+		messages[ch].sort((a, b) => a.ts - b.ts);
+		if (messages[ch].length > MEMORY_PER_CHANNEL) messages[ch].splice(0, messages[ch].length - MEMORY_PER_CHANNEL);
+	}
+}
+loadMessages();
+let lastTs = Math.max(0, ...CHANNELS.map((c) => messages[c].at(-1)?.ts || 0));
+
+// ---------- saving ----------
+const queue = [];
+let appending = false;
+function pump() {
+	if (appending || !queue.length) return;
+	appending = true;
+	fs.appendFile(MSG_FILE, queue.splice(0).join(""), (err) => {
+		if (err) console.error("couldn't save messages:", err);
+		appending = false;
+		pump();
+	});
+}
 
 let saveTimer;
+let saving = false;
+let pending = false;
 function save() {
 	clearTimeout(saveTimer);
-	saveTimer = setTimeout(() => {
-		fs.mkdirSync(DIR, { recursive: true });
-		fs.writeFile(FILE + ".tmp", JSON.stringify(db), (err) => {
-			if (!err) fs.rename(FILE + ".tmp", FILE, () => {});
-		});
-	}, 400);
+	saveTimer = setTimeout(writeUsers, 400);
 }
+function writeUsers() {
+	if (saving) {
+		pending = true; // never run two writes at once
+		return;
+	}
+	saving = true;
+	const done = () => {
+		saving = false;
+		if (pending) {
+			pending = false;
+			writeUsers();
+		}
+	};
+	fs.writeFile(FILE + ".tmp", JSON.stringify({ users: db.users, sessions: db.sessions }), (err) => {
+		if (err) {
+			console.error("couldn't save accounts:", err);
+			return done();
+		}
+		fs.copyFile(FILE, FILE + ".bak", () => fs.rename(FILE + ".tmp", FILE, () => done()));
+	});
+}
+process.on("exit", () => {
+	try {
+		if (queue.length) fs.appendFileSync(MSG_FILE, queue.splice(0).join(""));
+		fs.writeFileSync(FILE, JSON.stringify({ users: db.users, sessions: db.sessions }));
+	} catch {}
+});
 
 const sha = (s) => crypto.createHash("sha256").update(s).digest("hex");
 const publicUser = (u) => ({ name: u.name, hue: u.hue });
 
-// simple per-key sliding window limiter
-const hits = new Map();
-function limited(key, max, ms) {
-	const now = Date.now();
-	const arr = (hits.get(key) || []).filter((t) => now - t < ms);
-	arr.push(now);
-	hits.set(key, arr);
-	return arr.length > max;
-}
-setInterval(() => {
-	const now = Date.now();
-	for (const [k, v] of hits) if (!v.some((t) => now - t < 3600e3)) hits.delete(k);
-}, 600e3).unref();
-
+// ---------- sessions ----------
 // failed-login tracking per account, so a stranger can't guess one person's password
 const fails = new Map();
 const failCount = (key) => (fails.get(key) || []).filter((t) => Date.now() - t < 600e3).length;
 const addFail = (key) => fails.set(key, [...(fails.get(key) || []).filter((t) => Date.now() - t < 600e3), Date.now()]);
+
+function pruneSessions() {
+	let changed = false;
+	for (const [k, s] of Object.entries(db.sessions)) {
+		if (Date.now() - s.created > SESSION_MS || !db.users[s.user]) {
+			delete db.sessions[k];
+			changed = true;
+		}
+	}
+	if (changed) save();
+}
+pruneSessions();
 setInterval(() => {
 	for (const k of fails.keys()) if (!failCount(k)) fails.delete(k);
-}, 600e3).unref();
+	pruneSessions();
+}, 3600e3).unref();
 
 function newSession(user) {
 	const token = crypto.randomBytes(32).toString("hex");
-	const key = user.name.toLowerCase();
-	const mine = Object.entries(db.sessions).filter(([, s]) => s.user === key).sort((a, b) => a[1].created - b[1].created);
-	while (mine.length >= MAX_SESSIONS_PER_USER) delete db.sessions[mine.shift()[0]];
-	db.sessions[sha(token)] = { user: key, created: Date.now() };
+	db.sessions[sha(token)] = { user: user.name.toLowerCase(), created: Date.now() };
 	save();
 	return token;
 }
@@ -91,7 +170,7 @@ function auth(req, res, next) {
 	next();
 }
 
-// ---- live clients (server-sent events) ----
+// ---------- live clients (server-sent events) ----------
 const clients = new Set();
 function onlineList() {
 	const seen = new Map();
@@ -106,16 +185,29 @@ setInterval(() => {
 	for (const c of clients) c.res.write(": ping\n\n");
 }, 25e3).unref();
 
+// ---------- history helpers ----------
+// messages are in time order, so "newer than" and "older than" can be found by walking from the end
+function newer(list, ts) {
+	let i = list.length;
+	while (i > 0 && list[i - 1].ts > ts) i--;
+	return list.slice(i);
+}
+function olderPage(list, before, limit) {
+	let end = list.length;
+	if (before) while (end > 0 && list[end - 1].ts >= before) end--;
+	const start = Math.max(0, end - limit);
+	return { messages: list.slice(start, end), more: start > 0 };
+}
+
 export function chatRouter() {
 	const r = express.Router();
-	r.use(express.json({ limit: "2kb" }));
+	r.use(express.json({ limit: "16kb" }));
 
 	async function hash(password, salt) {
 		return (await scrypt(password, salt, 32)).toString("hex");
 	}
 
 	r.post("/signup", async (req, res) => {
-		if (limited("su:" + req.ip, 6, 3600e3)) return res.status(429).json({ error: "Too many accounts created from this network. Try again later." });
 		const { username, password } = req.body || {};
 		if (typeof username !== "string" || !/^[A-Za-z0-9_.-]{3,20}$/.test(username))
 			return res.status(400).json({ error: "Username must be 3-20 characters: letters, numbers, . _ -" });
@@ -139,7 +231,6 @@ export function chatRouter() {
 	});
 
 	r.post("/login", async (req, res) => {
-		if (limited("li:" + req.ip, 10, 60e3)) return res.status(429).json({ error: "Too many attempts. Wait a minute and try again." });
 		const { username, password } = req.body || {};
 		const uname = typeof username === "string" ? username.toLowerCase().slice(0, 40) : "";
 		if (failCount("u:" + uname) >= 6) return res.status(429).json({ error: "Too many wrong passwords for that account. Try again in 10 minutes." });
@@ -164,33 +255,35 @@ export function chatRouter() {
 
 	r.get("/me", auth, (req, res) => res.json({ user: publicUser(req.user) }));
 
+	// ?after=<time>  only messages newer than that   |   ?before=<time>&limit=<n>  a page of older messages
 	r.get("/history", auth, (req, res) => {
 		const ch = String(req.query.channel);
 		if (!CHANNELS.includes(ch)) return res.status(400).json({ error: "Unknown channel." });
-		res.json({ messages: db.messages[ch].slice(-100) });
+		const after = Number(req.query.after) || 0;
+		if (after) return res.json({ messages: newer(messages[ch], after).slice(-500) });
+		const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 100));
+		res.json(olderPage(messages[ch], Number(req.query.before) || 0, limit));
 	});
 
 	r.post("/send", auth, (req, res) => {
 		const { channel, text } = req.body || {};
 		if (!CHANNELS.includes(channel)) return res.status(400).json({ error: "Unknown channel." });
-		const t = typeof text === "string" ? cleanText(text.slice(0, 1000)).slice(0, 500) : "";
+		const t = typeof text === "string" ? cleanText(text.slice(0, MAX_TEXT * 2)).slice(0, MAX_TEXT) : "";
 		if (!t) return res.status(400).json({ error: "Message is empty." });
-		if (limited("msg:" + req.user.name, 8, 10e3)) return res.status(429).json({ error: "Slow down a little." });
-		if ((t.match(/https?:\/\//gi) || []).length > 3) return res.status(400).json({ error: "Too many links in one message." });
-		const last = db.messages[channel].filter((m) => m.u === req.user.name).slice(-1)[0];
-		if (last && last.t === t && Date.now() - last.ts < 30e3) return res.status(429).json({ error: "You just sent that." });
+		lastTs = Math.max(Date.now(), lastTs + 1); // strictly increasing, so paging by time never skips a message
 		const msg = {
-			id: Date.now().toString(36) + crypto.randomBytes(3).toString("hex"),
+			id: lastTs.toString(36) + crypto.randomBytes(3).toString("hex"),
 			ch: channel,
 			u: req.user.name,
 			h: req.user.hue,
 			t,
-			ts: Date.now(),
+			ts: lastTs,
 		};
-		const list = db.messages[channel];
+		const list = messages[channel];
 		list.push(msg);
-		if (list.length > KEEP) list.splice(0, list.length - KEEP);
-		save();
+		if (list.length > MEMORY_PER_CHANNEL) list.shift(); // only trims memory; the message stays in the file
+		queue.push(JSON.stringify(msg) + "\n");
+		pump();
 		broadcast("message", msg);
 		res.json({ ok: true });
 	});
@@ -205,9 +298,7 @@ export function chatRouter() {
 		const t = tickets.get(String(req.query.ticket || ""));
 		tickets.delete(String(req.query.ticket || ""));
 		if (!t || t.exp < Date.now()) return res.status(401).json({ error: "Please reconnect." });
-		const mine = [...clients].filter((c) => c.user === t.user).length;
-		const fromIp = [...clients].filter((c) => c.ip === req.ip).length;
-		if (mine >= MAX_STREAMS_PER_USER || fromIp >= MAX_STREAMS_PER_IP) return res.status(429).json({ error: "Too many open chat connections." });
+		if (clients.size >= MAX_STREAMS_TOTAL) return res.status(503).json({ error: "Chat is busy. Try again in a moment." });
 		req.user = t.user;
 		res.writeHead(200, {
 			"Content-Type": "text/event-stream",
@@ -215,7 +306,7 @@ export function chatRouter() {
 			Connection: "keep-alive",
 			"X-Accel-Buffering": "no",
 		});
-		const client = { res, user: req.user, ip: req.ip };
+		const client = { res, user: req.user };
 		clients.add(client);
 		res.write(`event: online\ndata: ${JSON.stringify(onlineList())}\n\n`);
 		broadcast("online", onlineList());

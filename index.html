@@ -29,6 +29,7 @@ svg.star{fill:var(--accent)}
 @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.6);color:#fff}100%{transform:scale(1)}}
 @keyframes ping{0%{box-shadow:0 0 0 0 rgba(120,255,180,.6)}100%{box-shadow:0 0 0 8px rgba(120,255,180,0)}}
 .top{position:absolute;top:18px;left:24px;right:24px;display:flex;align-items:center;justify-content:space-between;font-size:13px;animation:fade 1s .2s both}
+body:not(.in-games) .brand{opacity:0;pointer-events:none}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px}
 .brand svg{animation:spin 14s linear infinite;filter:drop-shadow(0 0 8px rgba(var(--ac),.7))}
 .brand small{font-weight:400;font-size:12px;opacity:.7;padding-left:12px;border-left:1px solid var(--line)}
@@ -346,6 +347,8 @@ html.rainon #bgimg{background-image:none!important;filter:none;inset:0}
 /* ---------- music: full-song video + mode badge ---------- */
 .mmode{display:inline-block;margin-top:4px;padding:1px 9px;background:rgba(var(--ac),.18);color:var(--accent);border-radius:999px;font-size:10.5px;font-weight:700}
 .mmode[hidden]{display:none}
+.msrc{margin-left:6px;text-decoration:none;color:var(--accent)}
+.msrc i{margin-right:4px}
 /* ---------- chat ---------- */
 .chatp{padding:68px 16px 90px;overflow:hidden}
 .chat{position:relative;height:100%;max-width:1180px;margin:0 auto;display:grid;grid-template-columns:216px minmax(0,1fr) 196px;gap:12px}
@@ -369,6 +372,7 @@ html.rainon #bgimg{background-image:none!important;filter:none;inset:0}
 .cmain{display:flex;flex-direction:column;overflow:hidden}
 .chead{display:flex;align-items:baseline;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);font-size:16px;font-weight:700}
 .chead small{font-size:12px;font-weight:400;opacity:.55}
+.older{align-self:center;flex:none;margin:2px 0 10px}
 .cmsgs{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:3px;padding:16px 20px}
 .msg{display:flex;align-items:flex-end;gap:10px;max-width:min(640px,88%);margin-top:10px;animation:rise .3s var(--ease)}
 .msg.cont{margin-top:0}
@@ -460,15 +464,19 @@ function applyFont(f,done){
   l.onerror=function(){l.remove();if(done)done(false)};
   document.head.appendChild(l)}
 try{var _f=JSON.parse(localStorage.getItem('polaris-font'));if(_f&&typeof _f.family==='string'){FONT=_f;applyFont(FONT)}}catch(e){}
-var BG={url:'',dim:.4,blur:0,rain:false,rv:2};
+var DEFAULT_TH={bg:'#0d0f12',ac:'#d5dae3'};
+var DEFAULT_BG={url:'https://images.pexels.com/photos/24604748/pexels-photo-24604748.jpeg?cs=srgb&dl=pexels-willianjusten-24604748.jpg&fm=jpg',dim:.03,blur:7,rain:true,rv:2};
+var BG={url:DEFAULT_BG.url,dim:DEFAULT_BG.dim,blur:DEFAULT_BG.blur,rain:DEFAULT_BG.rain,rv:2};
 function cssUrl(u){return 'url("'+String(u).replace(/["\\\n\r]/g,function(c){return encodeURIComponent(c)})+'")'}
 function applyBg(){var st=document.documentElement.style,cl=document.documentElement.classList;
   if(BG.url){st.setProperty('--bgimg',cssUrl(BG.url));st.setProperty('--bgdim',BG.dim);st.setProperty('--bgblur',BG.blur+'px');cl.add('hasbg')}else{st.removeProperty('--bgimg');cl.remove('hasbg')}
   cl.toggle('rainset',!!(BG.url&&BG.rain))
   if(typeof rainSync==='function')rainSync()}
-try{var _b=JSON.parse(localStorage.getItem('polaris-bg'));if(_b&&typeof _b.url==='string'&&/^(https?:\/\/|data:image\/)/i.test(_b.url)){BG={url:_b.url,dim:typeof _b.dim==='number'?Math.min(.85,Math.max(0,_b.dim)):.4,blur:typeof _b.blur==='number'?Math.min(30,Math.max(0,_b.blur)):0,rain:_b.rv===2&&_b.rain===true,rv:2};applyBg()}}catch(e){}
-var TH={bg:'#070f20',ac:'#a8defc'};
-try{var _s=JSON.parse(localStorage.getItem('polaris-theme'));if(_s&&/^#[0-9a-f]{6}$/i.test(_s.bg)&&/^#[0-9a-f]{6}$/i.test(_s.ac)){TH=_s;applyTheme(TH.bg,TH.ac)}}catch(e){}
+try{var _b=JSON.parse(localStorage.getItem('polaris-bg'));if(_b&&typeof _b.url==='string'&&(_b.url===''||/^(https?:\/\/|data:image\/)/i.test(_b.url))){BG={url:_b.url,dim:typeof _b.dim==='number'?Math.min(.85,Math.max(0,_b.dim)):.4,blur:typeof _b.blur==='number'?Math.min(30,Math.max(0,_b.blur)):0,rain:_b.rv===2&&_b.rain===true,rv:2};applyBg()}}catch(e){}
+applyBg();
+var TH={bg:DEFAULT_TH.bg,ac:DEFAULT_TH.ac};
+try{var _s=JSON.parse(localStorage.getItem('polaris-theme'));if(_s&&/^#[0-9a-f]{6}$/i.test(_s.bg)&&/^#[0-9a-f]{6}$/i.test(_s.ac))TH=_s}catch(e){}
+applyTheme(TH.bg,TH.ac);
 </script>
 </head>
 <body>
@@ -659,7 +667,7 @@ try{var _s=JSON.parse(localStorage.getItem('polaris-theme'));if(_s&&/^#[0-9a-f]{
       <div class="mbar" id="mbar">
         <div class="mnow">
           <div class="mthumb" id="mbArt"><i class="fa-solid fa-music"></i></div>
-          <div class="mtxt"><b id="mbName">Nothing playing</b><small id="mbArtist">Pick a song to start listening</small><span class="mmode" id="mbMode" hidden></span></div>
+          <div class="mtxt"><b id="mbName">Nothing playing</b><small id="mbArtist">Pick a song to start listening</small><span class="mmode" id="mbMode" hidden></span><a class="mmode msrc" id="mbSrc" hidden target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-soundcloud"></i> View on SoundCloud</a></div>
           <button class="mib" id="mbLike" type="button" aria-label="Like song" disabled><i class="fa-regular fa-heart"></i></button>
         </div>
         <div class="mctl">
@@ -725,7 +733,7 @@ try{var _s=JSON.parse(localStorage.getItem('polaris-theme'));if(_s&&/^#[0-9a-f]{
   <h2 id="pt"></h2><p id="pd"></p><button id="pc">Close</button>
 </div>
 
-<div class="bl"><span class="dot"></span><span>online users: <b id="on">1</b></span></div>
+<div class="bl"><span class="dot"></span><span>online users: <b id="on">&ndash;</b></span></div>
 <div class="br">
   <a class="chip dc" href="https://discord.gg/CSda8qzxEP" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-discord" aria-hidden="true"></i>Discord</a>
 </div>
@@ -784,16 +792,20 @@ function sendPos(x,y){if(room)room.presence({x:x,y:y}).catch(function(){})}
 addEventListener('pointermove',function(e){mx=e.clientX;my=e.clientY;sendPos(+(mx/W).toFixed(3),+(my/H).toFixed(3))});
 document.addEventListener('pointerleave',function(){mx=my=-1e3;sendPos(null,null)});
 
-// ---------- online users (live viewers via room) ----------
+// ---------- online users (counted by the server: everyone who has Polaris open right now) ----------
 var onEl=document.getElementById('on');
 function setOnline(n){if(+onEl.textContent===n)return;onEl.textContent=n;onEl.classList.remove('bump');void onEl.offsetWidth;onEl.classList.add('bump')}
-(async function(){try{
-  if(!window.claude||!claude.use)return;
-  var r=await claude.use('room');if(!r)return;room=r;
-  var upd=function(){setOnline(Math.max(1,room.peers().filter(function(p){return p.kind==='viewer'}).length))};
-  room.onPeers(upd,function(){setOnline(1)});upd();
-}catch(e){}})();
-
+var VID=null;try{VID=localStorage.getItem('polaris-vid')}catch(e){}
+if(!VID||!/^[a-f0-9]{24}$/.test(VID)){
+  VID=Array.prototype.map.call(crypto.getRandomValues(new Uint8Array(12)),function(b){return('0'+b.toString(16)).slice(-2)}).join('');
+  try{localStorage.setItem('polaris-vid',VID)}catch(e){}}
+function presencePing(){
+  fetch('/api/presence/ping',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:VID}),keepalive:true})
+    .then(function(r){return r.ok?r.json():null}).then(function(j){if(j&&typeof j.online==='number')setOnline(Math.max(1,j.online))}).catch(function(){})}
+presencePing();setInterval(presencePing,30000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)presencePing()});
+// closing the page removes you from the count right away instead of waiting for the timeout
+addEventListener('pagehide',function(){try{navigator.sendBeacon('/api/presence/leave',new Blob([JSON.stringify({id:VID})],{type:'application/json'}))}catch(e){}});
 // ---------- clock ----------
 function tick(){document.getElementById('clock').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
 tick();setInterval(tick,15000);
@@ -809,13 +821,19 @@ function sortNow(){if(gs.value==='az')games.sort(function(a,b){return a.name.loc
 function art(g){var h=0,i;for(i=0;i<g.id.length;i++)h=(h*31+g.id.charCodeAt(i))%360;
   var w=g.name.replace(/[^A-Za-z0-9 ]/g,'').split(' ').filter(Boolean),a=w[0]||'?';
   return{bg:'linear-gradient(135deg,hsl('+h+',65%,42%),hsl('+(h+55)+',70%,20%))',t:(a.charAt(0)+(w[1]?w[1].charAt(0):a.charAt(1))).toUpperCase()}}
-function cover(a,g){var im=new Image(),i=-1,list=(g.img?[g.img]:[]).concat(IMGS);im.alt='';
-  im.onload=function(){a.insertBefore(im,a.querySelector('.nm'))};
-  im.onerror=function(){if(++i<list.length)im.src=GAME_BASE+g.id+'/'+list[i]};
-  im.onerror()}
-function play(g){var u=GAME_BASE+g.id+'/';pl.inert=false;document.getElementById('ptitle').textContent=g.name;document.getElementById('pnew').href=u;pf.src=u;pl.classList.add('show');if(typeof rainSync==='function')rainSync()}
+// covers load as you scroll to them, and use small thumbnails (vendor/thumbs) before falling back to the full-size art
+var coverIO='IntersectionObserver' in window?new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){coverIO.unobserve(e.target);if(e.target._load)e.target._load()}})},{rootMargin:'300px'}):null;
+function cover(a,g){
+  function load(){
+    var im=new Image(),i=-1,list=['vendor/thumbs/'+g.id+'.webp'].concat(g.img?[GAME_BASE+g.id+'/'+g.img]:[],IMGS.map(function(f){return GAME_BASE+g.id+'/'+f}));
+    im.alt='';im.decoding='async';
+    im.onload=function(){a.insertBefore(im,a.querySelector('.nm'))};
+    im.onerror=function(){if(++i<list.length)im.src=list[i]};
+    im.onerror()}
+  if(coverIO){a._load=load;coverIO.observe(a)}else load()}function play(g){var u=GAME_BASE+g.id+'/';pl.inert=false;document.getElementById('ptitle').textContent=g.name;document.getElementById('pnew').href=u;pf.src=u;pl.classList.add('show');if(typeof rainSync==='function')rainSync()}
 function stop(){pl.classList.remove('show');pl.inert=true;pf.src='about:blank';if(typeof rainSync==='function')rainSync()}
 function renderGames(){
+  if(coverIO)coverIO.disconnect();
   var q=gq.value.trim().toLowerCase();gl.textContent='';
   var list=games.filter(function(g){return!q||g.name.toLowerCase().indexOf(q)>=0||g.id.indexOf(q)>=0});
   document.getElementById('gcount').textContent=list.length+' games';
@@ -931,7 +949,7 @@ function setTheme(bg,ac){TH={bg:bg,ac:ac};applyTheme(bg,ac);try{localStorage.set
 THEMES.forEach(function(t){var b=document.createElement('button'),sw=document.createElement('i');b.type='button';b.className='preset';sw.style.background='linear-gradient(135deg,'+t.bg+' 50%,'+t.ac+' 50%)';b.appendChild(sw);b.appendChild(document.createTextNode(t.n));b.addEventListener('click',function(){setTheme(t.bg,t.ac)});presetsEl.appendChild(b)});
 cbg.addEventListener('input',function(){setTheme(cbg.value,cac.value)});
 cac.addEventListener('input',function(){setTheme(cbg.value,cac.value)});
-document.getElementById('treset').addEventListener('click',function(){setTheme(THEMES[0].bg,THEMES[0].ac)});
+document.getElementById('treset').addEventListener('click',function(){setTheme(DEFAULT_TH.bg,DEFAULT_TH.ac)});
 document.getElementById('sback').addEventListener('click',function(){show('Home')});
 syncTheme();
 
@@ -1142,7 +1160,7 @@ function fmtT(s){s=Math.max(0,Math.floor(s||0));return Math.floor(s/60)+':'+('0'
 function ico(cls){var i=document.createElement('i');i.className=cls;i.setAttribute('aria-hidden','true');return i}
 function artImg(box,url,fb){box.textContent='';if(url){var im=new Image();im.alt='';im.loading='lazy';im.src=url;im.onerror=function(){box.textContent='';box.appendChild(ico(fb||'fa-solid fa-music'))};box.appendChild(im)}else box.appendChild(ico(fb||'fa-solid fa-music'))}
 function isLiked(t){return MU.lib.liked.some(function(x){return x.id===t.id})}
-function slim(t){return{id:t.id,n:t.n,a:t.a,al:t.al,c:t.c,p:t.p,s:t.s,d:t.d,i:t.i,e:t.e}}
+function slim(t){return{id:t.id,n:t.n,a:t.a,al:t.al,c:t.c,p:t.p,s:t.s,d:t.d,i:t.i,e:t.e,u:t.u}}
 function toggleLike(t){
   if(isLiked(t))MU.lib.liked=MU.lib.liked.filter(function(x){return x.id!==t.id});else MU.lib.liked.unshift(slim(t));
   saveLib();refreshLikes();if(MU.detail&&MU.detail.type==='liked')render()}
@@ -1182,8 +1200,9 @@ function viewSearch(){
     note(out,'Searching…');
     mapi('search?q='+encodeURIComponent(q)).then(function(j){
       if(MU.sq!==q)return;out.textContent='';
-      j.full=j.full||[];
-      if(!j.songs.length&&!j.albums.length&&!j.full.length){note(out,'No results for “'+q+'”.');return}
+      j.full=j.full||[];j.soundcloud=j.soundcloud||[];
+      if(j.soundcloud.length){var sb=el('div');j.soundcloud.forEach(function(s,i){sb.appendChild(trackRow(s,i,j.soundcloud))});out.appendChild(section('SoundCloud','fa-brands fa-soundcloud',sb,false))}
+      if(!j.songs.length&&!j.albums.length&&!j.full.length&&!j.soundcloud.length){note(out,'No results for “'+q+'”.');return}
       if(j.full.length){var fb=el('div');j.full.forEach(function(s,i){fb.appendChild(trackRow(s,i,j.full))});out.appendChild(section('Full songs','fa-solid fa-play-circle',fb,false))}
       if(j.albums.length){var row=el('div','mrow');j.albums.forEach(function(a){row.appendChild(listCard(a.n,a.a,a.i,'fa-solid fa-compact-disc',function(){openDetail('album',a.id)}))});out.appendChild(section('Albums','fa-solid fa-compact-disc',row,true))}
       if(j.songs.length){var box=el('div');j.songs.forEach(function(s,i){box.appendChild(trackRow(s,i,j.songs))});out.appendChild(section('Previews (30 seconds)','fa-solid fa-music',box,false))}
@@ -1266,7 +1285,7 @@ function playList(list,i){var t=list[i];if(!t||!(t.s||t.p))return;MU.queue=list.
 function playCur(){
   var t=MU.queue[MU.qi];if(!t)return;MU.cur=t;audio.src=t.s||t.p;var pr=audio.play();if(pr&&pr.catch)pr.catch(function(){});
   artImg(document.getElementById('mbArt'),t.i);document.getElementById('mbName').textContent=t.n;document.getElementById('mbArtist').textContent=t.a;mbLike.disabled=false;
-  mbSeek.value=0;mbCur.textContent='0:00';mbDur.textContent=t.s?fmtT((t.d||0)/1000):'0:30';setMode(t.s?'Full song':'30s preview');refreshLikes();refreshPlaying();
+  mbSeek.value=0;mbCur.textContent='0:00';mbDur.textContent=t.s?fmtT((t.d||0)/1000):'0:30';setMode(t.s?'Full song':'30s preview');var src=document.getElementById('mbSrc');src.hidden=!t.u;if(t.u)src.href=t.u;refreshLikes();refreshPlaying();
   if('mediaSession' in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:t.n,artist:t.a,album:t.al||'',artwork:t.i?[{src:t.i,sizes:'400x400',type:'image/jpeg'}]:[]})}catch(e){}}}
 function nextT(d){if(!MU.queue.length)return;MU.qi=(MU.qi+d+MU.queue.length)%MU.queue.length;playCur()}
 function playIcon(){var on=!audio.paused;mbPlay.firstChild.className=on?'fa-solid fa-pause':'fa-solid fa-play';dockMusic.classList.toggle('playing',on)}
@@ -1316,7 +1335,7 @@ function selectChan(c){
   cs.ch=c;cs.unread[c]=0;renderChans();
   var meta=CH.filter(function(x){return x[0]===c})[0];
   document.getElementById('chname').textContent='# '+c;document.getElementById('chdesc').textContent=meta[2];cin.placeholder='Message #'+c;
-  if(cs.msgs[c])renderMsgs(true);else{cmsgs.textContent='';capi('history?channel='+c).then(function(j){cs.msgs[c]=j.messages;if(cs.ch===c)renderMsgs(true)}).catch(function(e){if(e.status===401)sessionEnded()})}}
+  if(cs.msgs[c])renderMsgs(true);else{cmsgs.textContent='';capi('history?channel='+c).then(function(j){cs.msgs[c]=j.messages;cs.more=cs.more||{};cs.more[c]=!!j.more;if(cs.ch===c)renderMsgs(true)}).catch(function(e){if(e.status===401)sessionEnded()})}}
 function fmtTime(d){return d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
 function dayLabel(d){var n=new Date(),y=new Date(n.getTime()-864e5);return d.toDateString()===n.toDateString()?'Today':d.toDateString()===y.toDateString()?'Yesterday':d.toLocaleDateString([],{month:'short',day:'numeric',year:d.getFullYear()===n.getFullYear()?undefined:'numeric'})}
 function linkify(box,text){
@@ -1328,6 +1347,7 @@ function linkify(box,text){
 function renderMsgs(force){
   var list=cs.msgs[cs.ch]||[],near=cmsgs.scrollHeight-cmsgs.scrollTop-cmsgs.clientHeight<90,prev=null,lastDay='';
   cmsgs.textContent='';
+  if(cs.more&&cs.more[cs.ch]){var ob=el('button','btn older');ob.type='button';ob.textContent='Load older messages';ob.addEventListener('click',loadOlder);cmsgs.appendChild(ob)}
   if(!list.length){var e=el('div','cempty');e.textContent='No messages in #'+cs.ch+' yet. Say hi!';cmsgs.appendChild(e);return}
   list.forEach(function(m){
     var d=new Date(m.ts);
@@ -1349,22 +1369,31 @@ function connect(){
     var es=cs.es=new EventSource('/api/chat/stream?ticket='+encodeURIComponent(j.ticket));
     es.addEventListener('message',function(e){
       var m=JSON.parse(e.data),list=cs.msgs[m.ch],mine=cs.me&&m.u===cs.me.name;
-      if(list&&!list.some(function(x){return x.id===m.id})){list.push(m);if(list.length>300)list.shift()}
+      if(list&&!list.some(function(x){return x.id===m.id})){list.push(m)}
       var visible=cp.classList.contains('show')&&cs.ch===m.ch;
       if(visible)renderMsgs(mine);else if(!mine){cs.unread[m.ch]=(cs.unread[m.ch]||0)+1;renderChans()}});
     es.addEventListener('online',function(e){renderMembers(JSON.parse(e.data))});
-    es.onopen=function(){if(cs.opened){cs.msgs={};selectChan(cs.ch)}cs.opened=true};
+    es.onopen=function(){if(cs.opened)CH.forEach(function(c){catchUp(c[0])});cs.opened=true};
     es.onerror=function(){es.close();if(cs.es===es){cs.es=null;cs.rt=setTimeout(function(){if(cs.me)connect()},3000)}};
-  }).catch(function(e){if(e.status===401)sessionEnded();else cs.rt=setTimeout(function(){if(cs.me)connect()},5000)})}// safety net: if the live stream is buffered or drops, still pick up other people's messages
-setInterval(function(){
-  if(!cs.me||!cp.classList.contains('show')||document.hidden)return;
-  var c=cs.ch;
-  capi('history?channel='+c).then(function(j){
+  }).catch(function(e){if(e.status===401)sessionEnded();else cs.rt=setTimeout(function(){if(cs.me)connect()},5000)})}
+// fetch only what's new since the last message we have (used after a reconnect, and as a safety net if the live stream is buffered)
+function catchUp(c){
+  var l0=cs.msgs[c];if(!l0)return;var last=l0.length?l0[l0.length-1].ts:0;
+  capi('history?channel='+c+'&after='+last).then(function(j){
     var list=cs.msgs[c];if(!list)return;var have={};list.forEach(function(m){have[m.id]=1});
     var add=j.messages.filter(function(m){return!have[m.id]});
-    if(add.length){add.forEach(function(m){list.push(m)});list.sort(function(a,b){return a.ts-b.ts});if(cs.ch===c)renderMsgs(false)}
-  }).catch(function(e){if(e.status===401)sessionEnded()})},5000);
-function startChat(user){
+    if(add.length){add.forEach(function(m){list.push(m)});list.sort(function(a,b){return a.ts-b.ts});if(cs.ch===c&&cp.classList.contains('show'))renderMsgs(false)}
+  }).catch(function(e){if(e.status===401)sessionEnded()})}
+setInterval(function(){if(cs.me&&cp.classList.contains('show')&&!document.hidden)catchUp(cs.ch)},15000);
+// older history is fetched in pages, so nothing ever "disappears" from the top of the chat
+function loadOlder(){
+  var c=cs.ch,l=cs.msgs[c];if(!l||!l.length)return;
+  var h0=cmsgs.scrollHeight,t0=cmsgs.scrollTop;
+  capi('history?channel='+c+'&before='+l[0].ts+'&limit=100').then(function(j){
+    var cur=cs.msgs[c],have={};cur.forEach(function(m){have[m.id]=1});
+    cs.msgs[c]=j.messages.filter(function(m){return!have[m.id]}).concat(cur);cs.more[c]=!!j.more;
+    if(cs.ch===c){renderMsgs(false);cmsgs.scrollTop=cmsgs.scrollHeight-h0+t0}
+  }).catch(function(e){if(e.status===401)sessionEnded()})}function startChat(user){
   cs.me=user;cauth.hidden=true;document.getElementById('cuser').hidden=false;cin.disabled=false;
   avatar(document.getElementById('cuav'),user.name,user.hue);document.getElementById('cuname').textContent=user.name;
   selectChan(cs.ch);connect()}

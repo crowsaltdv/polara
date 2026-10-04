@@ -5,10 +5,12 @@
 	"type": "module",
 	"scripts": {
 		"start": "node server.js",
+		"usage": "node usage-report.js",
 		"dev": "node server.js"
 	},
 	"dependencies": {
 		"@mercuryworkshop/proxy-bootstrap": "*",
+		"compression": "^1.8.2",
 		"express": "^4.21.2"
 	},
 	"devDependencies": {

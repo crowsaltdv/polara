@@ -1,4 +1,5 @@
 import express from "express";
+import * as soundcloud from "./soundcloud.js";
 
 // Song data comes from Apple's public iTunes catalog (charts, search, lookup).
 // It exposes real songs with artwork and 30-second previews; full tracks are not available through it.
@@ -123,7 +124,7 @@ export function musicRouter() {
 				if (!sections.length) throw new Error("no data");
 				return sections;
 			});
-			res.json({ sections: v });
+			res.set("Cache-Control", "private, max-age=900").json({ sections: v });
 		} catch {
 			res.status(502).json({ error: "Couldn't load music right now. Try again in a moment." });
 		}
@@ -131,20 +132,34 @@ export function musicRouter() {
 
 	r.get("/search", async (req, res) => {
 		const q = String(req.query.q || "").trim().slice(0, 80);
-		if (!q) return res.json({ songs: [], albums: [], full: [] });
+		if (!q) return res.json({ songs: [], albums: [], full: [], soundcloud: [] });
 		try {
 			const v = await cached("s:" + q.toLowerCase(), 600e3, async () => {
 				const enc = encodeURIComponent(q);
-				const [s, a, f] = await Promise.all([
+				const [s, a, f, sc] = await Promise.all([
 					jget(`https://itunes.apple.com/search?term=${enc}&entity=song&limit=30`),
 					jget(`https://itunes.apple.com/search?term=${enc}&entity=album&limit=12`),
 					audiusSearch(q).catch(() => []),
+					soundcloud.configured ? soundcloud.search(q).catch(() => []) : [],
 				]);
-				return { songs: s.results.filter((x) => x.previewUrl).map(song), albums: a.results.filter((x) => x.collectionId).map(album), full: f };
+				return { songs: s.results.filter((x) => x.previewUrl).map(song), albums: a.results.filter((x) => x.collectionId).map(album), full: f, soundcloud: sc };
 			});
-			res.json(v);
+			res.set("Cache-Control", "private, max-age=300").json(v);
 		} catch {
 			res.status(502).json({ error: "Search isn't available right now." });
+		}
+	});
+
+	// SoundCloud (official API): sends the browser straight to a short-lived link on SoundCloud's own servers
+	r.get("/soundcloud/stream", async (req, res) => {
+		const id = String(req.query.id || "");
+		if (!soundcloud.configured || !/^\d{1,15}$/.test(id)) return res.status(404).end();
+		try {
+			const url = await soundcloud.streamUrl(id);
+			if (!url || !/^https:\/\//i.test(url) && !process.env.SOUNDCLOUD_API) return res.status(404).end();
+			res.set("Cache-Control", "no-store").redirect(302, url);
+		} catch {
+			res.status(502).end();
 		}
 	});
 
@@ -164,7 +179,7 @@ export function musicRouter() {
 				if (!head) throw new Error("missing");
 				return { album: album(head), tracks: rows.filter((x) => x.wrapperType === "track" && x.previewUrl).map(song) };
 			});
-			res.json(v);
+			res.set("Cache-Control", "private, max-age=900").json(v);
 		} catch {
 			res.status(502).json({ error: "Couldn't load that album." });
 		}
