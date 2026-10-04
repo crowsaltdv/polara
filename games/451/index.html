@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <base href="https://cdn.jsdelivr.net/gh/giorgirick2-gif/game-webports-onawebsite@main/baldi-remaster/">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Baldi's Basics Classic Remastered">
+
+    <title>Unity WebGL Player | Baldi's Basics Classic Remastered</title>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #231F20;
+        }
+
+        #unity-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #loading-text {
+            position: fixed;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            color: white;
+            font: 48px cursive;
+            text-align: center;
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loading-text">LOADING...</div>
+
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+
+    <script src="Build/WebGL.loader.js"></script>
+
+    <script>
+        const canvas = document.querySelector("#unity-canvas");
+        const loadingText = document.querySelector("#loading-text");
+
+        let totalBytes = 0;
+        let loadedBytes = 0;
+
+        function formatSize(bytes) {
+            if (bytes >= 1024 ** 3) {
+                return (bytes / 1024 ** 3).toFixed(2) + " GB";
+            }
+
+            if (bytes >= 1024 ** 2) {
+                return (bytes / 1024 ** 2).toFixed(2) + " MB";
+            }
+
+            if (bytes >= 1024) {
+                return (bytes / 1024).toFixed(2) + " KB";
+            }
+
+            return bytes + " B";
+        }
+
+        async function getSize(url) {
+            try {
+                const response = await fetch(url, {
+                    method: "HEAD"
+                });
+
+                return Number(response.headers.get("Content-Length")) || 0;
+            } catch {
+                return 0;
+            }
+        }
+
+        async function fetchWithProgress(url) {
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error(`Failed to load ${url}: ${response.status}`);
+            }
+
+            if (!response.body) {
+                throw new Error(`Streaming is not supported for ${url}`);
+            }
+
+            const reader = response.body.getReader();
+            const chunks = [];
+            let received = 0;
+
+            while (true) {
+                const { done, value } = await reader.read();
+
+                if (done) {
+                    break;
+                }
+
+                received += value.length;
+                loadedBytes += value.length;
+                chunks.push(value);
+
+                const percent = totalBytes
+                    ? ((loadedBytes / totalBytes) * 100).toFixed(1)
+                    : "?";
+
+                loadingText.textContent =
+                    `LOADING... ${formatSize(loadedBytes)} / ${formatSize(totalBytes)} (${percent}%)`;
+            }
+
+            const buffer = new Uint8Array(received);
+
+            let offset = 0;
+
+            for (const chunk of chunks) {
+                buffer.set(chunk, offset);
+                offset += chunk.length;
+            }
+
+            return buffer.buffer;
+        }
+
+        function getParts(file, count) {
+            return Array.from(
+                { length: count },
+                (_, index) => `${file}.part${index + 1}`
+            );
+        }
+
+        async function mergeFiles(parts) {
+            const buffers = await Promise.all(
+                parts.map(fetchWithProgress)
+            );
+
+            return URL.createObjectURL(
+                new Blob(buffers)
+            );
+        }
+
+        async function startGame() {
+            const dataParts = getParts("Build/WebGL.data", 3);
+            const wasmParts = getParts("Build/WebGL.wasm", 3);
+
+            const allParts = [
+                ...dataParts,
+                ...wasmParts
+            ];
+
+            const sizes = await Promise.all(
+                allParts.map(getSize)
+            );
+
+            totalBytes = sizes.reduce(
+                (total, size) => total + size,
+                0
+            );
+
+            const [dataUrl, wasmUrl] = await Promise.all([
+                mergeFiles(dataParts),
+                mergeFiles(wasmParts)
+            ]);
+
+            try {
+                await createUnityInstance(canvas, {
+                    dataUrl,
+                    frameworkUrl: "Build/WebGL.framework.js",
+                    codeUrl: wasmUrl,
+                    streamingAssetsUrl: "StreamingAssets",
+                    companyName: "Basically Games",
+                    productName: "Baldi's Basics Classic Remastered",
+                    productVersion: "1.1"
+                });
+
+                loadingText.remove();
+                URL.revokeObjectURL(dataUrl);
+                URL.revokeObjectURL(wasmUrl);
+
+            } catch (error) {
+                console.error("Unity failed to start:", error);
+
+                loadingText.textContent =
+                    "Failed to load the game.";
+            }
+        }
+
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            const viewport = document.createElement("meta");
+
+            viewport.name = "viewport";
+            viewport.content =
+                "width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes";
+
+            document.head.appendChild(viewport);
+        }
+
+        startGame().catch(error => {
+            console.error("Game loading error:", error);
+            loadingText.textContent = "Failed to load the game.";
+        });
+    </script>
+
+</body>
+
+</html>

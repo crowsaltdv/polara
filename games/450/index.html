@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MANTLE.NES</title>
+
+<style>
+@font-face {
+  font-family: "Pixel Operator Bold";
+  src: url("PixelOperator-Bold.ttf");
+}
+
+html,body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: black;
+}
+
+#game {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  background: black;
+  color: white;
+  font-family: "Pixel Operator Bold", monospace;
+}
+
+#screen {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  object-fit: contain;
+}
+
+#warning {
+  position: absolute;
+  inset: 0;
+  width: 640px;
+  height: 480px;
+  max-width: 100%;
+  max-height: 100%;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 30px;
+  text-align: center;
+  background: black;
+  color: white;
+  font-family: "Pixel Operator Bold", monospace;
+  font-size: 20px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+#warning .red {
+  color: red;
+}
+
+#warning .yellow {
+  color: yellow;
+}
+
+#warning small {
+  font-size: 15px;
+}
+
+.hidden {
+  display: none !important;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+  <canvas id="screen" width="256" height="240"></canvas>
+
+  <div id="warning" onclick="start()">
+    <div>
+      This half-fangame, half-demake
+      <b class="red">contains spoilers</b>
+      for Deltarune Chapter 3.
+    </div>
+
+    <div>
+      <b class="yellow">Click here to play in-browser.</b>
+    </div>
+
+    <small>
+      (But for best results, download it and use an emulator like
+      Mesen or FCEUX. Thanks :3)
+    </small>
+  </div>
+</div>
+
+<script src="https://unpkg.com/jsnes/dist/jsnes.min.js"></script>
+
+<script>
+const ROM_URL="https://quizizz.com/_media/uploadedFiles/c81c0fca-c25f-47af-aa3f-a55b8047b2ef-v2";
+const canvas=document.getElementById("screen");
+const ctx=canvas.getContext("2d");
+const imageData=ctx.createImageData(256,240);
+const C=jsnes.Controller;
+
+const keyMap={
+  KeyZ:C.BUTTON_A,
+  KeyX:C.BUTTON_B,
+  KeyA:C.BUTTON_SELECT,
+  KeyS:C.BUTTON_START,
+  ArrowUp:C.BUTTON_UP,
+  ArrowDown:C.BUTTON_DOWN,
+  ArrowLeft:C.BUTTON_LEFT,
+  ArrowRight:C.BUTTON_RIGHT
+};
+
+const audioSize=131072;
+const audioL=new Float32Array(audioSize);
+const audioR=new Float32Array(audioSize);
+
+let audioWrite=0;
+let audioRead=0;
+let audio;
+let processor;
+let nes;
+let started=false;
+let lastTime=performance.now();
+let accumulator=0;
+
+const pressed=new Set();
+const frameTime=1000/60.0988;
+
+function pushAudio(l,r){
+  const next=(audioWrite+1)%audioSize;
+
+  if(next===audioRead)
+    audioRead=(audioRead+1)%audioSize;
+
+  audioL[audioWrite]=l;
+  audioR[audioWrite]=r;
+  audioWrite=next;
+}
+
+function initAudio(){
+  audio=new AudioContext();
+
+  processor=audio.createScriptProcessor(2048,0,2);
+
+  processor.onaudioprocess=e=>{
+    const l=e.outputBuffer.getChannelData(0);
+    const r=e.outputBuffer.getChannelData(1);
+
+    for(let i=0;i<l.length;i++){
+      if(audioRead!==audioWrite){
+        l[i]=audioL[audioRead];
+        r[i]=audioR[audioRead];
+        audioRead=(audioRead+1)%audioSize;
+      }else{
+        l[i]=0;
+        r[i]=0;
+      }
+    }
+  };
+
+  processor.connect(audio.destination);
+}
+
+function createNES(rom){
+  nes=new jsnes.NES({
+    emulateSound:true,
+    sampleRate:audio.sampleRate,
+
+    onFrame:frame=>{
+      for(let i=0,p=0;i<frame.length;i++,p+=4){
+        const c=frame[i];
+
+        imageData.data[p]=c&255;
+        imageData.data[p+1]=(c>>8)&255;
+        imageData.data[p+2]=(c>>16)&255;
+        imageData.data[p+3]=255;
+      }
+
+      ctx.putImageData(imageData,0,0);
+    },
+
+    onAudioSample:pushAudio
+  });
+
+  nes.loadROM(rom);
+}
+
+async function loadROM(){
+  const response=await fetch(ROM_URL);
+
+  if(!response.ok)
+    throw new Error(`ROM load failed: ${response.status}`);
+
+  const bytes=new Uint8Array(await response.arrayBuffer());
+  let rom="";
+
+  for(let i=0;i<bytes.length;i+=0x8000)
+    rom+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
+
+  createNES(rom);
+}
+
+async function start(){
+  if(started)return;
+
+  started=true;
+  document.getElementById("warning").classList.add("hidden");
+
+  initAudio();
+  await audio.resume();
+  await loadROM();
+
+  lastTime=performance.now();
+  requestAnimationFrame(loop);
+}
+
+addEventListener("keydown",async e=>{
+  const button=keyMap[e.code];
+
+  if(button===undefined||!nes)return;
+
+  e.preventDefault();
+
+  if(pressed.has(e.code))return;
+
+  pressed.add(e.code);
+
+  if(audio.state!=="running")
+    await audio.resume();
+
+  nes.buttonDown(1,button);
+},{passive:false});
+
+addEventListener("keyup",e=>{
+  const button=keyMap[e.code];
+
+  if(button===undefined||!nes)return;
+
+  e.preventDefault();
+
+  pressed.delete(e.code);
+  nes.buttonUp(1,button);
+},{passive:false});
+
+addEventListener("blur",()=>{
+  for(const code of pressed)
+    nes?.buttonUp(1,keyMap[code]);
+
+  pressed.clear();
+});
+
+function loop(now){
+  const delta=Math.min(now-lastTime,100);
+  lastTime=now;
+  accumulator+=delta;
+
+  while(accumulator>=frameTime){
+    nes.frame();
+    accumulator-=frameTime;
+  }
+
+  requestAnimationFrame(loop);
+}
+</script>
+
+</body>
+</html>
