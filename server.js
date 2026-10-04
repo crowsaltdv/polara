@@ -2,11 +2,15 @@ import http from "node:http";
 import https from "node:https";
 import dns from "node:dns/promises";
 import net from "node:net";
+import path from "node:path";
 import express from "express";
+import compression from "compression";
 import { bootstrap } from "@mercuryworkshop/proxy-bootstrap";
 import { chatRouter } from "./chat.js";
 import { musicRouter } from "./music.js";
+import { presenceRouter } from "./presence.js";
 import { rateLimit, securityHeaders, configureWisp, guardUpgrades } from "./security.js";
+import * as usage from "./usage.js";
 
 // A public site must not go down because one odd connection hit a bug: log it and keep serving.
 process.on("uncaughtException", (err) => console.error("Unexpected error (still running):", err));
@@ -21,20 +25,64 @@ const app = express();
 const PORT = process.env.PORT || 3030;
 app.disable("x-powered-by");
 
-// Behind a reverse proxy / CDN (Cloudflare, Caddy, nginx...), set TRUST_PROXY=1 so rate limits see real visitor IPs.
+// Hosts put a reverse proxy in front of the app, so every visitor would look like the same IP address (and share rate limits).
+// By default the forwarded-address header is trusted when it comes from a local/private proxy (Caddy, Docker, most hosts).
+// Behind Cloudflare or another public CDN, set TRUST_PROXY to the number of proxies in front of the app (usually 1 or 2).
 const TRUST = process.env.TRUST_PROXY;
-if (TRUST) app.set("trust proxy", /^\d+$/.test(TRUST) ? Number(TRUST) : TRUST);
+app.set("trust proxy", TRUST ? (/^\d+$/.test(TRUST) ? Number(TRUST) : TRUST) : "loopback, linklocal, uniquelocal");
 const visitorIp = (req) => (TRUST ? String(req.headers["x-forwarded-for"] || "").split(",").pop().trim() || req.socket.remoteAddress : req.socket.remoteAddress);
 
 app.use(securityHeaders);
+
+// ---- bandwidth: count every byte sent (see `npm run usage`), and stop single visitors from mirroring the games ----
+app.use((req, res, next) => {
+	const p = req.path;
+	const cat = p.startsWith("/api/img") ? "img" : p.startsWith("/api/") ? "api" : p.startsWith("/games/") ? "games" : "static";
+	if ((cat === "games" || cat === "static") && usage.staticBlocked(req.ip)) {
+		return res.status(429).set("Retry-After", "3600").type("text/plain").send("Download limit reached for today. Try again tomorrow.");
+	}
+	const write = res.write.bind(res);
+	const end = res.end.bind(res);
+	const size = (c) => (c == null || typeof c === "function" ? 0 : Buffer.byteLength(c));
+	res.write = (c, ...a) => {
+		usage.add(cat, size(c), req.ip);
+		return write(c, ...a);
+	};
+	res.end = (c, ...a) => {
+		usage.add(cat, size(c), req.ip);
+		return end(c, ...a);
+	};
+	next();
+});
+
+// gzip/deflate text, scripts, JSON and wasm (images, video and already-compressed files are skipped automatically)
+app.use(
+	compression({
+		threshold: 1024,
+		level: 5,
+		filter: (req, res) => {
+			if (req.headers.range) return false; // partial downloads must stay byte-exact
+			if (req.path.startsWith("/api/chat/stream")) return false; // live chat stream
+			return compression.filter(req, res);
+		},
+	}),
+);
+
+// the proxy's runtime files (scramjet, controller, transports) are the same for everyone: let browsers keep them
+app.use((req, res, next) => {
+	if (/^\/(scram|controller|clients)\//.test(req.path)) res.setHeader("Cache-Control", "public, max-age=21600");
+	next();
+});
 app.use((req, res, next) => {
 	if (routeRequest(req, res)) return;
 	next();
 });
 
-app.use("/api", rateLimit({ windowMs: 60e3, max: 300 }));
+// chat has no limits at all, so it is mounted before the shared rate limiter below
 app.use("/api/chat", chatRouter());
+app.use("/api", rateLimit({ windowMs: 60e3, max: 300 }));
 app.use("/api/music", musicRouter());
+app.use("/api/presence", presenceRouter());
 
 // Google Fonts catalog for the font picker (via fontsource's public metadata), cached for a day
 let fonts = null;
@@ -78,6 +126,19 @@ function guardedLookup(hostname, options, cb) {
 	);
 }
 const IMG_TYPE = /^image\/(png|jpe?g|webp|gif|avif)(;|$)/i;
+// recently fetched images are kept in memory so the same background isn't downloaded from its host again for every visitor
+const imgCache = new Map();
+let imgCacheBytes = 0;
+const IMG_CACHE_MAX = 120e6;
+function cacheImage(key, value) {
+	imgCache.set(key, { ...value, at: Date.now() });
+	imgCacheBytes += value.buf.length;
+	for (const [k, v] of imgCache) {
+		if (imgCacheBytes <= IMG_CACHE_MAX) break;
+		imgCache.delete(k);
+		imgCacheBytes -= v.buf.length;
+	}
+}
 function fetchImage(url, hops = 0) {
 	return new Promise((resolve, reject) => {
 		if (hops > 3 || !/^https?:$/.test(url.protocol)) return reject(new Error("bad url"));
@@ -101,7 +162,7 @@ function fetchImage(url, hops = 0) {
 			let size = 0;
 			res.on("data", (c) => {
 				size += c.length;
-				if (size > 25e6) return req.destroy(new Error("too large"));
+				if (size > 12e6) return req.destroy(new Error("too large"));
 				chunks.push(c);
 			});
 			res.on("end", () => resolve({ type: type.split(";")[0], buf: Buffer.concat(chunks) }));
@@ -113,10 +174,17 @@ function fetchImage(url, hops = 0) {
 }
 app.get("/api/img", rateLimit({ windowMs: 60e3, max: 40 }), async (req, res) => {
 	try {
-		const { type, buf } = await fetchImage(new URL(String(req.query.u || "")));
+		const url = new URL(String(req.query.u || ""));
+		let hit = imgCache.get(url.href);
+		if (hit && Date.now() - hit.at > 864e5) hit = null;
+		if (!hit) {
+			hit = await fetchImage(url);
+			cacheImage(url.href, hit);
+		}
+		const { type, buf } = hit;
 		res.set({
 			"Content-Type": type,
-			"Cache-Control": "public, max-age=86400",
+			"Cache-Control": "public, max-age=604800",
 			"X-Content-Type-Options": "nosniff",
 			"Content-Security-Policy": "default-src 'none'; sandbox",
 		}).send(buf);
@@ -126,9 +194,20 @@ app.get("/api/img", rateLimit({ windowMs: 60e3, max: 40 }), async (req, res) => 
 });
 
 // ---- static files: only the site itself is public (never server code, data, dotfiles or package files) ----
-const PUBLIC = /^\/(?:$|index\.html$|games\.js$|games\/|vendor\/)/;
+const PUBLIC = /^\/(?:$|index\.html$|games\.js$|robots\.txt$|games\/|vendor\/)/;
 app.use((req, res, next) => (PUBLIC.test(req.path) ? next() : res.status(404).end()));
-app.use(express.static(import.meta.dirname, { dotfiles: "deny" }));
+app.use(
+	express.static(import.meta.dirname, {
+		dotfiles: "deny",
+		// the page itself is re-checked on every visit (cheap 304 if unchanged); heavy files are kept by the browser
+		setHeaders(res, file) {
+			const rel = path.relative(import.meta.dirname, file).replace(/\\/g, "/");
+			if (rel === "index.html" || rel === "games.js") res.setHeader("Cache-Control", "no-cache");
+			else if (rel.startsWith("vendor/")) res.setHeader("Cache-Control", "public, max-age=2592000");
+			else if (rel.startsWith("games/")) res.setHeader("Cache-Control", "public, max-age=604800");
+		},
+	}),
+);
 
 // never leak stack traces
 app.use((err, req, res, next) => {
@@ -153,4 +232,5 @@ server.on("error", (err) => {
 
 server.listen(PORT, () => {
 	console.log(`Polaris is running on http://localhost:${PORT}`);
+	console.log(usage.summary());
 });

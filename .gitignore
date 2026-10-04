@@ -1,0 +1,12 @@
+# Runtime data that must never be published (chat messages, usage counters, backups)
+/data/messages.jsonl
+/data/usage.json
+/data/*.bak
+/data/*.tmp
+/data/*.corrupt-*
+
+# Secrets and local tooling
+.env
+.env.*
+.claude/
+*.log
