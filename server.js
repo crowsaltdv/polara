@@ -2,6 +2,7 @@ import http from "node:http";
 import https from "node:https";
 import dns from "node:dns/promises";
 import net from "node:net";
+import fs from "node:fs";
 import path from "node:path";
 import express from "express";
 import compression from "compression";
@@ -9,6 +10,7 @@ import { bootstrap } from "@mercuryworkshop/proxy-bootstrap";
 import { chatRouter } from "./chat.js";
 import { musicRouter } from "./music.js";
 import { presenceRouter } from "./presence.js";
+import { AD_HOSTS } from "./adhosts.js";
 import { rateLimit, securityHeaders, configureWisp, guardUpgrades } from "./security.js";
 import * as usage from "./usage.js";
 
@@ -201,6 +203,39 @@ app.use((req, res, next) => {
 	next();
 });
 app.use((req, res, next) => (PUBLIC.test(req.path) ? next() : res.status(404).end()));
+
+// Game pages get vendor/guard.js inlined at the top. Plenty of them pull in ad and tracking code (Google ads, cdn.r9x.in, ...),
+// which would otherwise run on Polaris' own origin next to the chat session; the guard stops those hosts from loading.
+const GUARD = "<script>" + fs.readFileSync(path.join(import.meta.dirname, "vendor", "guard.js"), "latin1").replace("[/*HOSTS*/]", JSON.stringify(AD_HOSTS)) + "</script>";
+const AD_HOST = new RegExp("(^|\\.)(" + AD_HOSTS.map((h) => h.replace(/\./g, "\\.")).join("|") + ")$", "i");
+// scripts written straight into the page are loaded before the guard can see them, so those tags are taken out here
+const AD_SCRIPT = /<script\b[^>]*\bsrc\s*=\s*["']?(?:https?:)?\/\/([^\/"'\s>]+)[^>]*>\s*<\/script>/gi;
+const GAMES_DIR = path.join(import.meta.dirname, "games");
+app.use("/games", async (req, res, next) => {
+	if (req.method !== "GET" && req.method !== "HEAD") return next();
+	let rel;
+	try {
+		rel = decodeURIComponent(req.path);
+	} catch {
+		return next();
+	}
+	if (rel.endsWith("/")) rel += "index.html";
+	if (!/\.html?$/i.test(rel)) return next();
+	const file = path.join(GAMES_DIR, rel);
+	if (!file.startsWith(GAMES_DIR + path.sep)) return next();
+	let page;
+	try {
+		page = (await fs.promises.readFile(file)).toString("latin1"); // latin1 keeps every byte exactly as it was
+	} catch {
+		return next();
+	}
+	page = page.replace(AD_SCRIPT, (tag, host) => (AD_HOST.test(host) ? "" : tag));
+	// insert after <head> (or <html>/doctype) so the page keeps its rendering mode
+	const at = /<head[^>]*>/i.exec(page) || /<html[^>]*>/i.exec(page) || /^\s*<!doctype[^>]*>/i.exec(page);
+	const i = at ? at.index + at[0].length : 0;
+	res.set({ "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=604800" });
+	res.send(Buffer.from(page.slice(0, i) + GUARD + page.slice(i), "latin1"));
+});
 app.use(
 	express.static(import.meta.dirname, {
 		dotfiles: "deny",
