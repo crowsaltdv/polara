@@ -32,6 +32,7 @@ for g in games:
         im = im.crop(((w - s) // 2, (h - s) // 2, (w - s) // 2 + s, (h - s) // 2 + s))
         im = im.resize((SIZE, SIZE), Image.LANCZOS)
         dest = os.path.join(out_dir, gid + ".webp")
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
         im.save(dest, "WEBP", quality=76, method=6)
         made += 1
         before += os.path.getsize(path)

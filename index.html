@@ -839,7 +839,7 @@ function stop(){pl.classList.remove('show');pl.inert=true;pf.src='about:blank';i
 function renderGames(){
   if(coverIO)coverIO.disconnect();
   var q=gq.value.trim().toLowerCase();gl.textContent='';
-  var list=games.filter(function(g){return!q||g.name.toLowerCase().indexOf(q)>=0||g.id.indexOf(q)>=0});
+  var list=games.filter(function(g){return!q||g.name.toLowerCase().indexOf(q)>=0||g.id.split('/').pop().indexOf(q)>=0});
   document.getElementById('gcount').textContent=list.length+' games';
   if(!list.length){var e=document.createElement('p');e.className='empty';e.style.gridColumn='1/-1';e.textContent='No games match "'+gq.value.trim()+'". Try a shorter search.';gl.appendChild(e);return}
   list.forEach(function(g,i){
