@@ -7,6 +7,7 @@
 <meta name="referrer" content="no-referrer">
 <link rel="stylesheet" href="vendor/fa/css/all.min.css">
 <style>
+#decoy{position:fixed;inset:0;z-index:2147483647;overflow:auto;background:#fff;transition:opacity .2s}#decoy.out{opacity:0}
 :root{--ink:#eaf6ff;--accent:#a8defc;--ac:168,222,252;--mid:95,129,153;--bg:7,15,32;--s:10,19,35;--sd:4,9,19;--g:25,38,56;--g1:16,35,74;--inkrgb:234,246,255;--onac:11,18,32;--glass:rgba(var(--g),.5);--line:rgba(var(--ac),.18);--ease:cubic-bezier(.22,1,.36,1);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(vendor/inter/inter-latin-wght-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(vendor/inter/inter-latin-ext-wght-normal.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
@@ -452,7 +453,7 @@ function applyCloak(id){var c=CLOAKS.filter(function(x){return x.id===id})[0]||C
   document.title=c.t;if(!l){l=document.createElement('link');l.id='favicon';l.rel='icon';document.head.appendChild(l)}l.removeAttribute('type');l.href=c.i||STARICON}
 var CK='polaris';try{CK=localStorage.getItem('polaris-cloak')||'polaris'}catch(e){}
 if(!CLOAKS.some(function(c){return c.id===CK}))CK='polaris';
-applyCloak(CK);
+applyCloak(CK);if(window.__decoyOn)window.__decoyHead();
 var FONT=null;
 function fontHref(family,weights){var ws=(weights||[]).filter(function(w){return[400,500,600,700,800].indexOf(w)>=0});
   return'https://fonts.googleapis.com/css2?family='+encodeURIComponent(family).replace(/%20/g,'+')+(ws.length?':wght@'+ws.join(';'):'')+'&display=swap'}
@@ -480,6 +481,160 @@ applyTheme(TH.bg,TH.ac);
 </script>
 </head>
 <body>
+<div id="decoy" aria-label="Education Network"></div>
+<template id="decoy-tpl">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{min-height:100%;background:#fff;color:#14213d;font:15px/1.63 Inter,"Segoe UI",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+a,button{font:inherit;color:inherit;text-decoration:none;cursor:pointer;background:none;border:0;text-align:left}
+svg{display:block}
+.c{width:min(1168px,calc(100% - 48px));margin:0 auto;position:relative}
+header{height:115px;background:#fff}
+.logo{position:absolute;left:1px;top:28px;display:flex;align-items:flex-start;gap:12px;color:#0b2557}
+.wm{font:500 45px/1 "Source Serif 4","Source Serif Pro","Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;letter-spacing:-.8px;margin-top:2px}
+.wm sup{font:400 10px/1 Inter,sans-serif;vertical-align:top;position:relative;top:4px;margin-left:1px;letter-spacing:0}
+.top{position:absolute;right:0;top:13px;height:33px;display:flex;align-items:center;gap:19px}
+.top a.t{font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#566b93}
+.top .srch{width:22px;height:22px;display:grid;place-items:center;color:#7d8fb0;margin:0 3px 0 0}
+.don{height:33px;padding:0 13px;display:flex;align-items:center;background:#f4f0e6;color:#0b2557;font-size:12.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.main{position:absolute;right:0;top:61px;height:30px;display:flex;align-items:center}
+.main a{font-size:18px;font-weight:700;color:#0b2557;padding:0 14px;line-height:24px;position:relative;white-space:nowrap}
+.main a+a:before{content:"";position:absolute;left:0;top:0;bottom:0;width:1px;background:#00bde6}
+.main a:last-child{padding-right:0}
+.menu{display:none;position:absolute;right:0;top:20px;width:42px;height:42px;place-items:center;color:#0b2557}
+.sub{background:#0a2d62;border-bottom:1px solid rgba(255,255,255,.1);border-top:1px solid rgba(255,255,255,.1);height:66px}
+.sub .c{height:100%;display:flex;justify-content:flex-end;align-items:center;gap:29px}
+.sub a{font-size:13px;font-weight:700;color:#19c1e8;letter-spacing:.01em;white-space:nowrap}
+.sub a.on{color:#fff}
+.hero{background:#0a2d62;height:239px;position:relative;color:#fff}
+.hero .c{padding:34px 0 0 52px}
+.eyebrow{font-size:11.5px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:#cfd9ec}
+.hero h1{font:400 58px/1.05 "Source Serif 4","Source Serif Pro","Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;letter-spacing:-.5px;margin-top:13px}
+.lede{font-size:21px;line-height:30px;font-weight:300;letter-spacing:-.25px;color:#d6e0f0;max-width:548px;margin-top:21px}
+.shape{position:absolute;right:33px;top:0;width:248px;height:279px;background:#00c0e8;clip-path:polygon(0 0,100% 0,100% 100%,0 57%);z-index:2}
+.body{width:min(800px,calc(100% - 40px));margin-left:max(20px,calc(50% - 439px));padding:96px 0 120px;position:relative;z-index:1}
+.body h2{font-size:22px;line-height:31px;font-weight:700;color:#0b2557;letter-spacing:.005em}
+.body p{margin-top:21px;color:#101b30;letter-spacing:-.3px}
+.body p.cta{margin-top:30px}
+.u{text-decoration:underline}
+.video{display:block;position:relative;width:525px;max-width:100%;aspect-ratio:525/295;background:#000;overflow:hidden;margin-top:19px;color:#fff;border-radius:0}
+.video .shot{position:absolute;left:12.6%;right:12.6%;top:0;bottom:0;background:linear-gradient(180deg,#2c566f 0%,#244a63 55%,#1b3e57 100%);overflow:hidden}
+.video .shot:before{content:"";position:absolute;left:0;top:0;bottom:0;width:62%;background:#1d4a66;clip-path:polygon(0 0,100% 0,78% 100%,0 100%)}
+.video .shot b{position:absolute;left:9%;top:23%;font:600 28px/1 "Source Serif 4","Palatino Linotype",Georgia,serif;color:#103149;letter-spacing:-.5px}
+.video .shot i{position:absolute;left:9%;top:60%;font:400 16.5px/1.3 "Source Serif 4","Palatino Linotype",Georgia,serif;font-style:normal;color:#7e9db0;width:62%}
+.video .shot svg{position:absolute;right:0;bottom:0;width:30%;height:82%}
+.video .fade{position:absolute;left:0;right:0;top:0;height:78px;background:linear-gradient(180deg,rgba(0,0,0,.78),rgba(0,0,0,0))}
+.video .av{position:absolute;left:27px;top:15px;width:36px;height:36px;border-radius:50%;background:#fff;display:grid;place-items:center}
+.video .ti{position:absolute;left:73px;top:9px;font-size:19px;font-weight:700;letter-spacing:-.35px;line-height:1.2}
+.video .ch{position:absolute;left:73px;top:36px;font-size:11px;font-weight:500;line-height:1}
+.video .play{position:absolute;left:50%;top:50%;width:64px;height:44px;margin:-22px 0 0 -32px;background:#f00;border-radius:13px;display:grid;place-items:center}
+.video .pill{position:absolute;bottom:12px;height:44px;border-radius:9px;background:rgba(15,15,15,.72);display:flex;align-items:center;font-weight:500;font-size:15.5px}
+.video .l{left:26px;width:100px;justify-content:space-around;padding:0 4px}
+.video .r{right:51px;padding:0 15px;gap:6px;letter-spacing:-.2px}
+.video .r em{font:800 17px/1 Inter,sans-serif;font-style:normal;letter-spacing:-.8px;display:flex;align-items:center;gap:3px}
+.video .r em span{display:block;width:26px;height:18px;border-radius:5px;background:#f00;position:relative}
+.video .r em span:after{content:"";position:absolute;left:10px;top:4px;border-left:8px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.btns{display:flex;align-items:center;gap:29px;margin-top:35px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;height:58px;padding:0 24px;background:#0069b4;color:#fff;font-weight:800;font-size:17px;letter-spacing:-.1px;box-shadow:5px 0 0 #00c0e8}
+.lnk{font-weight:700;font-size:17px;color:#0a5fa8;letter-spacing:-.1px}
+footer{background:#0a2d62;color:#cfd9ec;padding:46px 0 38px}
+footer .c{display:flex;flex-wrap:wrap;gap:20px 40px;justify-content:space-between;align-items:flex-start}
+footer .wm{color:#fff;font-size:30px}
+footer nav{display:flex;flex-wrap:wrap;gap:10px 26px}
+footer nav a{font-size:13px;font-weight:600;letter-spacing:.04em}
+footer small{display:block;width:100%;font-size:12px;opacity:.7;margin-top:6px}
+@media (max-width:1000px){
+ header{height:76px}
+ .logo{top:14px}.wm{font-size:34px}
+ .top,.main{display:none}.menu{display:grid}
+ .sub{height:auto;overflow-x:auto}.sub .c{justify-content:flex-start;padding:19px 0;width:calc(100% - 32px);gap:24px}
+ .hero{height:auto;padding-bottom:40px;overflow:hidden}.hero .c{padding:30px 0 0;width:calc(100% - 40px)}
+ .hero h1{font-size:42px}.lede{font-size:18px;line-height:26px}
+ .shape{width:90px;height:120px;right:0}
+ .body{padding-top:44px;margin-left:20px}
+}
+</style>
+<div class="wrap">
+ <header>
+  <div class="c">
+   <a class="logo" href="#" aria-label="ProLiteracy">
+    <svg width="30" height="50" viewBox="0 0 30 50" aria-hidden="true"><path d="M13 7 29 0v40L13 50z" fill="#0b2557"/><path d="M0 19l13 5v26L0 42z" fill="#00bfe8"/></svg>
+    <span class="wm">ProLiteracy<sup>&reg;</sup></span>
+   </a>
+   <nav class="top" aria-label="Utility">
+    <a class="t" href="#">Membership</a><a class="t" href="#">New Readers Press</a><a class="t" href="#">News</a>
+    <button class="srch" type="button" aria-label="Search"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><path d="M15.5 15.5L22 22"/></svg></button>
+    <a class="don" href="#">Donate</a>
+   </nav>
+   <nav class="main" aria-label="Main">
+    <a href="#">About</a><a href="#">Resources</a><a href="#">Courses &amp; Learning</a><a href="#">Get Involved</a><a href="#">Grants &amp; Funding</a>
+   </nav>
+   <button class="menu" type="button" aria-label="Menu"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+  </div>
+ </header>
+ <div class="sub"><div class="c">
+  <a href="#">All Courses</a><a href="#">Upcoming Webinars</a><a class="on" href="#">Education Network</a><a href="#">ProLiteracy Conference</a>
+ </div></div>
+ <section class="hero">
+  <div class="c">
+   <p class="eyebrow">Courses and Learning</p>
+   <h1>Education Network</h1>
+   <p class="lede">Find everything you need to improve your practice and transform lives&mdash;all in one place.</p>
+  </div>
+  <i class="shape"></i>
+ </section>
+ <main class="body">
+  <h2>Access our extensive collection of resources and courses.</h2>
+  <p>Education Network is where adult literacy and ESL educators, program staff, and trainers can find tools, resource files, and professional learning courses to provide students a productive experience and help advance their success. Adult learners also will find educational resources to help them achieve their goals faster. ProLiteracy members have the ability to access exclusive resources. If you are not a member and would like to learn more, <a class="u" href="#">click here</a>.</p>
+  <button class="video" type="button" aria-label="Play video: Welcome to Education Network">
+   <span class="shot">
+    <b>ProLiteracy</b><i>Welcome to ProLiteracy Education Network!</i>
+    <svg viewBox="0 0 60 100" aria-hidden="true"><path d="M8 100V62c0-14 10-22 22-22s22 8 22 22v38z" fill="#3f8f93"/><circle cx="30" cy="26" r="13" fill="#8a5a3c"/><path d="M15 24c0-14 8-20 17-20 10 0 15 8 14 22-3-7-8-10-15-10-7 0-12 3-16 8z" fill="#2a1a14"/></svg>
+   </span>
+   <span class="fade"></span>
+   <span class="av"><svg width="20" height="20" viewBox="0 0 30 50" aria-hidden="true"><path d="M13 7 29 0v40L13 50z" fill="#0b2557"/><path d="M0 19l13 5v26L0 42z" fill="#00a9de"/></svg></span>
+   <span class="ti">Welcome to Education Network</span><span class="ch">ProLiteracy</span>
+   <span class="play"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l14 8-14 8z" fill="#fff"/></svg></span>
+   <span class="pill l"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M14 4l8 7-8 7v-4.2c-5.5 0-9 1.6-11 5.2.6-6 4.5-10 11-11z"/></svg><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+   <span class="pill r">Watch on <em><span></span>YouTube</em></span>
+  </button>
+  <p class="cta">Log in or create a free account and get started today!</p>
+  <div class="btns"><a class="btn" href="#">Log in to EdNet</a><a class="lnk" href="#">Learn how to create an account</a></div>
+ </main>
+ <footer>
+  <div class="c">
+   <a class="wm" href="#">ProLiteracy</a>
+   <nav><a href="#">About</a><a href="#">Resources</a><a href="#">Courses &amp; Learning</a><a href="#">Get Involved</a><a href="#">Grants &amp; Funding</a><a href="#">Contact</a><a href="#">Privacy Policy</a></nav>
+   <small>&copy; ProLiteracy. All rights reserved.</small>
+  </div>
+ </footer>
+</div>
+</template>
+<script>
+// Landing page that looks like an ordinary education site; pressing any button or link opens Polaris.
+(function(){
+  var host=document.getElementById('decoy'),tpl=document.getElementById('decoy-tpl');
+  if(window.top!==window.self){host.remove();tpl.remove();return} // a window cloak already disguises the tab
+  window.__decoyOn=true;
+  var root=host.attachShadow({mode:'open'});root.appendChild(tpl.content.cloneNode(true));
+  var ICON="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 50'%3E%3Cpath d='M13 7 29 0v40L13 50z' fill='%230b2557'/%3E%3Cpath d='M0 19l13 5v26L0 42z' fill='%2300bfe8'/%3E%3C/svg%3E";
+  window.__decoyHead=function(){
+    document.title='Education Network | ProLiteracy';
+    var l=document.getElementById('favicon');if(!l){l=document.createElement('link');l.id='favicon';l.rel='icon';document.head.appendChild(l)}
+    l.removeAttribute('type');l.href=ICON};
+  window.__decoyHead();
+  var frozen=[];
+  [].forEach.call(document.body.children,function(el){if(el!==host&&el.tagName!=='SCRIPT'&&el.tagName!=='TEMPLATE'&&!el.inert){el.inert=true;frozen.push(el)}});
+  var done=false;
+  function enter(){
+    if(done)return;done=true;window.__decoyOn=false;
+    frozen.forEach(function(el){el.inert=false});
+    if(typeof applyCloak==='function'&&typeof CK!=='undefined')applyCloak(CK);else document.title='Polaris';
+    host.classList.add('out');setTimeout(function(){host.remove();tpl.remove()},220)}
+  root.addEventListener('click',function(e){var t=e.target;if(t.closest&&t.closest('a,button')){e.preventDefault();enter()}});
+})();
+</script>
+
 <canvas id="rain" aria-hidden="true"></canvas>
 <div id="bgimg" aria-hidden="true"></div>
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -498,20 +653,20 @@ applyTheme(TH.bg,TH.ac);
     <h1>Polaris</h1>
   </div>
   <div class="pills">
-    <button class="pill" data-p="Games">Games</button>
+    <button class="pill" data-p="Games">Projects</button>
     <button class="pill" data-p="Apps">Apps</button>
     <button class="pill" data-p="Settings">Settings</button>
   </div>
 </main>
 
-<section class="page" id="games" aria-label="Games">
+<section class="page" id="games" aria-label="Projects">
   <div class="page-in">
     <div class="ph">
       <button class="back" id="gback" aria-label="Back to home"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Back</button>
-      <h2>Games<small id="gcount"></small></h2>
-      <input id="gq" type="search" placeholder="Search games" aria-label="Search games">
-      <select id="gs" aria-label="Sort games"><option value="random">Random</option><option value="az">A&ndash;Z</option></select>
-      <button class="ic" id="gsh" aria-label="Shuffle games"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
+      <h2>Projects<small id="gcount"></small></h2>
+      <input id="gq" type="search" placeholder="Search projects" aria-label="Search projects">
+      <select id="gs" aria-label="Sort projects"><option value="random">Random</option><option value="az">A&ndash;Z</option></select>
+      <button class="ic" id="gsh" aria-label="Shuffle projects"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
     </div>
     <div class="grid" id="glist"></div>
   </div>
@@ -519,12 +674,12 @@ applyTheme(TH.bg,TH.ac);
 
 <div class="player" id="player" inert>
   <div class="pbar">
-    <button class="back" id="pback"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Games</button>
+    <button class="back" id="pback"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Projects</button>
     <h3 id="ptitle"></h3>
-    <button class="back" id="pfull" type="button" aria-label="Fullscreen game"><i class="fa-solid fa-expand"></i>Fullscreen</button>
+    <button class="back" id="pfull" type="button" aria-label="Fullscreen project"><i class="fa-solid fa-expand"></i>Fullscreen</button>
     <a class="back" id="pnew" target="_blank" rel="noopener">Open in new tab</a>
   </div>
-  <iframe id="pf" title="Game" allow="fullscreen; autoplay; gamepad"></iframe>
+  <iframe id="pf" title="Project" allow="fullscreen; autoplay; gamepad"></iframe>
 </div>
 
 <section class="browser" id="browser" aria-label="Browser" inert>
@@ -600,7 +755,7 @@ applyTheme(TH.bg,TH.ac);
       <p class="hint" id="fmsg" role="alert"></p>
     </div>
     <div class="card">
-      <h3><i class="fa-solid fa-user-secret"></i>Tab Cloak</h3>
+      <h3><i class="fa-solid fa-user-secret"></i>Tab Hide</h3>
       <p>Make Polaris look like something harmless in your tab bar.</p>
       <div class="cgrid" id="cgrid"></div>
     </div>
@@ -629,15 +784,15 @@ applyTheme(TH.bg,TH.ac);
       </div>
     </div>
     <div class="card">
-      <h3><i class="fa-solid fa-window-restore"></i>Window cloak</h3>
-      <p>The Privacy button opens Polaris inside a disguised window, using your Tab Cloak title and icon. If nothing opens, allow pop-ups for this site.</p>
-      <div class="seg" id="cmode" role="group" aria-label="Cloak method"><button type="button" data-m="about">about:blank</button><button type="button" data-m="blob">blob:</button></div>
+      <h3><i class="fa-solid fa-window-restore"></i>Window hide</h3>
+      <p>The Privacy button opens Polaris inside a disguised window, using your Tab Hide title and icon. If nothing opens, allow pop-ups for this site.</p>
+      <div class="seg" id="cmode" role="group" aria-label="Hide method"><button type="button" data-m="about">about:blank</button><button type="button" data-m="blob">blob:</button></div>
       <p id="cmodehint"></p>
       <button class="chip" id="cloakbtn" type="button">Open now</button>
     </div>
     <div class="card">
       <h3><i class="fa-solid fa-heart"></i>Credits</h3>
-      <p>Games sourced from GN-Math, Selenite, and DarkNux.</p>
+      <p>Projects sourced from GN-Math, Selenite, and DarkNux.</p>
     </div>
   </div>
 </section>
@@ -744,7 +899,7 @@ applyTheme(TH.bg,TH.ac);
 
 <nav class="dock" id="dock" aria-label="Main">
   <button class="on" data-p="Home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10h-6v-6H9v6H3z"/></svg><span>Home</span></button>
-  <button data-p="Games" aria-label="Games" title="Games"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></button>
+  <button data-p="Games" aria-label="Projects" title="Projects"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></button>
   <button data-p="Apps" aria-label="Apps"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 12h18M12 3v18"/></svg></button>
   <button data-p="Chat" aria-label="Chat"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 01-11.5 7.2L3 21l1.8-6.5A8 8 0 1121 12z"/></svg></button>
   <button data-p="Music" aria-label="Music" title="Music"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></button>
@@ -840,8 +995,8 @@ function renderGames(){
   if(coverIO)coverIO.disconnect();
   var q=gq.value.trim().toLowerCase();gl.textContent='';
   var list=games.filter(function(g){return!q||g.name.toLowerCase().indexOf(q)>=0||g.id.split('/').pop().indexOf(q)>=0});
-  document.getElementById('gcount').textContent=list.length+' games';
-  if(!list.length){var e=document.createElement('p');e.className='empty';e.style.gridColumn='1/-1';e.textContent='No games match "'+gq.value.trim()+'". Try a shorter search.';gl.appendChild(e);return}
+  document.getElementById('gcount').textContent=list.length+' projects';
+  if(!list.length){var e=document.createElement('p');e.className='empty';e.style.gridColumn='1/-1';e.textContent='No projects match "'+gq.value.trim()+'". Try a shorter search.';gl.appendChild(e);return}
   list.forEach(function(g,i){
     var a=document.createElement('a'),c=art(g),d=document.createElement('div'),n=document.createElement('span');
     a.className='g';a.style.setProperty('--i',Math.min(i,30));a.href=GAME_BASE+g.id+'/';a.target='_blank';a.rel='noopener';
@@ -1138,7 +1293,7 @@ function cloak(){
     if(CMODE==='blob')w=window.open(URL.createObjectURL(new Blob([html],{type:'text/html'})),'_blank');
     else{w=window.open('about:blank','_blank');if(w)fillBlank(w.document)}
   }catch(e){}
-  if(!w){document.getElementById('pt').textContent='Pop-up blocked';document.getElementById('pd').textContent='Allow pop-ups for this site, then press Privacy again to open the cloaked tab.';panel.classList.add('show');return}
+  if(!w){document.getElementById('pt').textContent='Pop-up blocked';document.getElementById('pd').textContent='Allow pop-ups for this site, then press Privacy again to open the hidden tab.';panel.classList.add('show');return}
   cloakWin=w}
 function syncCmode(){
   [].forEach.call(document.querySelectorAll('#cmode button'),function(b){b.classList.toggle('on',b.dataset.m===CMODE)});
