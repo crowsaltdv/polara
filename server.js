@@ -32,7 +32,21 @@ app.disable("x-powered-by");
 // Behind Cloudflare or another public CDN, set TRUST_PROXY to the number of proxies in front of the app (usually 1 or 2).
 const TRUST = process.env.TRUST_PROXY;
 app.set("trust proxy", TRUST ? (/^\d+$/.test(TRUST) ? Number(TRUST) : TRUST) : "loopback, linklocal, uniquelocal");
-const visitorIp = (req) => (TRUST ? String(req.headers["x-forwarded-for"] || "").split(",").pop().trim() || req.socket.remoteAddress : req.socket.remoteAddress);
+// Same default as Express above: when the connection comes from a local/private proxy, the visitor is the first address in
+// X-Forwarded-For (counting from the right) that is not itself a local/private proxy. Without this every visitor behind a host's
+// reverse proxy looked like one IP, so the proxy's per-visitor limits were shared and the 7th person got "could not connect".
+const isLocalAddr = (a) => {
+	a = String(a || "").replace(/^::ffff:/i, "");
+	return net.isIPv4(a) ? /^(127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/.test(a) : /^(::1$|fe[89ab]|f[cd])/i.test(a);
+};
+const visitorIp = (req) => {
+	const peer = req.socket.remoteAddress;
+	const via = String(req.headers["x-forwarded-for"] || "").split(",").map((s) => s.trim()).filter(Boolean);
+	if (TRUST) return via.pop() || peer;
+	if (!isLocalAddr(peer)) return peer;
+	for (let i = via.length - 1; i >= 0; i--) if (!isLocalAddr(via[i])) return via[i];
+	return via[0] || peer;
+};
 
 app.use(securityHeaders);
 
