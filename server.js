@@ -161,7 +161,7 @@ function fetchImage(url, hops = 0) {
 		if (hops > 3 || !/^https?:$/.test(url.protocol)) return reject(new Error("bad url"));
 		if (net.isIP(url.hostname) && privateAddress(url.hostname)) return reject(new Error("blocked address"));
 		const lib = url.protocol === "https:" ? https : http;
-		const req = lib.get(url, { lookup: guardedLookup, timeout: 15000, headers: { "User-Agent": "Mozilla/5.0 (Polaris image proxy)", Accept: "image/*" } }, (res) => {
+		const req = lib.get(url, { lookup: guardedLookup, timeout: 15000, headers: { "User-Agent": "Mozilla/5.0 (Lunaris image proxy)", Accept: "image/*" } }, (res) => {
 			if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
 				res.resume();
 				try {
@@ -220,7 +220,7 @@ app.use((req, res, next) => {
 app.use((req, res, next) => (PUBLIC.test(req.path) ? next() : res.status(404).end()));
 
 // Game pages get vendor/guard.js inlined at the top. Plenty of them pull in ad and tracking code (Google ads, cdn.r9x.in, ...),
-// which would otherwise run on Polaris' own origin next to the chat session; the guard stops those hosts from loading.
+// which would otherwise run on Lunaris' own origin next to the chat session; the guard stops those hosts from loading.
 const GUARD = "<script>" + fs.readFileSync(path.join(import.meta.dirname, "vendor", "guard.js"), "latin1").replace("[/*HOSTS*/]", JSON.stringify(AD_HOSTS)) + "</script>";
 const AD_HOST = new RegExp("(^|\\.)(" + AD_HOSTS.map((h) => h.replace(/\./g, "\\.")).join("|") + ")$", "i");
 // scripts written straight into the page are loaded before the guard can see them, so those tags are taken out here
@@ -278,7 +278,7 @@ guardUpgrades(server, routeUpgrade, visitorIp);
 
 server.on("error", (err) => {
 	if (err.code === "EADDRINUSE") {
-		console.error(`\nPolaris can't start: port ${PORT} is already in use.\nAnother copy is probably still running. Close its window (or end node.exe in Task Manager) and run start.bat again.\n`);
+		console.error(`\nLunaris can't start: port ${PORT} is already in use.\nAnother copy is probably still running. Close its window (or end node.exe in Task Manager) and run start.bat again.\n`);
 	} else {
 		console.error(err);
 	}
@@ -286,6 +286,6 @@ server.on("error", (err) => {
 });
 
 server.listen(PORT, () => {
-	console.log(`Polaris is running on http://localhost:${PORT}`);
+	console.log(`Lunaris is running on http://localhost:${PORT}`);
 	console.log(usage.summary());
 });

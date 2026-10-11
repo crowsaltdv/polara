@@ -14,7 +14,7 @@ export const limits = {
 	staticDaily: num(process.env.STATIC_DAILY_MB, 3000) * 1e6,
 };
 
-const DIR = process.env.POLARIS_DATA_DIR || path.join(import.meta.dirname, "data");
+const DIR = (process.env.LUNARIS_DATA_DIR || process.env.POLARIS_DATA_DIR) || path.join(import.meta.dirname, "data");
 const FILE = path.join(DIR, "usage.json");
 const dayKey = () => new Date().toISOString().slice(0, 10);
 const monthKey = () => new Date().toISOString().slice(0, 7);

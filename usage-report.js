@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const FILE = path.join(process.env.POLARIS_DATA_DIR || path.join(import.meta.dirname, "data"), "usage.json");
+const FILE = path.join((process.env.LUNARIS_DATA_DIR || process.env.POLARIS_DATA_DIR) || path.join(import.meta.dirname, "data"), "usage.json");
 let d;
 try {
 	d = JSON.parse(fs.readFileSync(FILE, "utf8"));

@@ -7,8 +7,8 @@ import express from "express";
 const scrypt = promisify(crypto.scrypt);
 
 export const CHANNELS = ["general", "links"];
-// On a host, point POLARIS_DATA_DIR at a persistent disk/volume so accounts and messages survive restarts and redeploys.
-const DIR = process.env.POLARIS_DATA_DIR || path.join(import.meta.dirname, "data");
+// On a host, point LUNARIS_DATA_DIR at a persistent disk/volume so accounts and messages survive restarts and redeploys.
+const DIR = (process.env.LUNARIS_DATA_DIR || process.env.POLARIS_DATA_DIR) || path.join(import.meta.dirname, "data");
 const FILE = path.join(DIR, "chat.json"); // accounts and login sessions
 const MSG_FILE = path.join(DIR, "messages.jsonl"); // every message ever sent, one per line, only ever appended to
 const MEMORY_PER_CHANNEL = 50000; // newest messages kept ready in memory (older ones stay in the file)
@@ -17,7 +17,7 @@ const MAX_USERS = 100000;
 const MAX_STREAMS_TOTAL = 20000;
 const MAX_TEXT = 2000;
 // names that could be mistaken for staff or the system
-const RESERVED = /^(admin|administrator|mod|moderator|staff|support|system|polaris|owner|official|root|server|bot|null|undefined)$/i;
+const RESERVED = /^(admin|administrator|mod|moderator|staff|support|system|polaris|lunaris|owner|official|root|server|bot|null|undefined)$/i;
 // control characters and invisible/bidirectional-override characters used to spoof or break layouts
 const JUNK = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F​-‏‪-‮⁠-⁤⁦-⁩﻿]/g;
 const cleanText = (s) => s.replace(JUNK, "").replace(/\n{3,}/g, "\n\n").trim();
