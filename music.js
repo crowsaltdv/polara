@@ -3,7 +3,7 @@ import * as soundcloud from "./soundcloud.js";
 
 // Song data comes from Apple's public iTunes catalog (charts, search, lookup).
 // It exposes real songs with artwork and 30-second previews; full tracks are not available through it.
-const HEADERS = { "User-Agent": "Mozilla/5.0 (Polaris music)" };
+const HEADERS = { "User-Agent": "Mozilla/5.0 (Lunaris music)" };
 const GENRES = [
 	["Pop", 14],
 	["Hip-Hop / Rap", 18],
@@ -87,11 +87,11 @@ const fullSong = (t) => ({
 });
 const playable = (t) => t && t.is_streamable && !t.is_stream_gated && !t.is_delete && !t.is_unlisted && t.duration > 30;
 async function audiusTrending() {
-	const j = await jget(`${AUDIUS}/tracks/trending?app_name=Polaris&limit=40`);
+	const j = await jget(`${AUDIUS}/tracks/trending?app_name=Lunaris&limit=40`);
 	return j.data.filter(playable).slice(0, 24).map(fullSong);
 }
 async function audiusSearch(q) {
-	const j = await jget(`${AUDIUS}/tracks/search?query=${encodeURIComponent(q)}&app_name=Polaris&limit=24`);
+	const j = await jget(`${AUDIUS}/tracks/search?query=${encodeURIComponent(q)}&app_name=Lunaris&limit=24`);
 	return j.data.filter(playable).slice(0, 12).map(fullSong);
 }
 const hits = new Map();
@@ -166,7 +166,7 @@ export function musicRouter() {
 	r.get("/audius/stream", (req, res) => {
 		const id = String(req.query.id || "");
 		if (!/^[A-Za-z0-9]{1,16}$/.test(id)) return res.status(400).end();
-		res.redirect(302, `${AUDIUS}/tracks/${id}/stream?app_name=Polaris`);
+		res.redirect(302, `${AUDIUS}/tracks/${id}/stream?app_name=Lunaris`);
 	});
 
 	r.get("/album", async (req, res) => {

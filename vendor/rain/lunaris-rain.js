@@ -1,4 +1,4 @@
-// Polaris glue for the Codrops RainEffect (see README.txt).
+// Lunaris glue for the Codrops RainEffect (see README.txt).
 // Turns the chosen background image into the two textures the effect wants (a sharp one that
 // shows through the drops and a blurred one for the glass) and manages size, start/stop and parallax.
 import Raindrops from "./raindrops.js";

@@ -1,7 +1,7 @@
 import express from "express";
 import { rateLimit } from "./security.js";
 
-// Counts people who currently have Polaris open. Each browser has a random id (kept in its localStorage) and
+// Counts people who currently have Lunaris open. Each browser has a random id (kept in its localStorage) and
 // checks in every 30 seconds; closing the page removes it immediately, and a browser that goes quiet drops
 // off after PRESENCE_TTL_S seconds. Ids live only in memory: nothing is stored on disk and no IPs are kept.
 const TTL = (Number(process.env.PRESENCE_TTL_S) || 150) * 1000;

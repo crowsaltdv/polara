@@ -1,6 +1,6 @@
-/* Polaris guard: the server inlines this at the top of every game page.
+/* Lunaris guard: the server inlines this at the top of every game page.
    Many game pages pull in advertising and tracking code (Google ad scripts, cdn.r9x.in, analytics). That code would run on
-   Polaris' own origin, next to the chat session, so it is stopped from loading, connecting or reporting back. The games
+   Lunaris' own origin, next to the chat session, so it is stopped from loading, connecting or reporting back. The games
    themselves are untouched. */
 (function () {
 	var BAD = new RegExp("(^|\\.)(" + [/*HOSTS*/].join("|").replace(/\./g, "\\.") + ")$", "i"); // the server fills in the host list (adhosts.js)

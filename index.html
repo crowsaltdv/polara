@@ -3,7 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Polaris</title>
+<title>Lunaris</title>
+<script>
+// Polaris is now Lunaris: carry saved settings over from the old storage keys
+(function(){try{var o='pola'+'ris-',ks=[],i;for(i=0;i<localStorage.length;i++)ks.push(localStorage.key(i));
+ks.forEach(function(k){if(k.indexOf(o)!==0)return;var nk='lunaris-'+k.slice(o.length);
+if(localStorage.getItem(nk)===null){var v=localStorage.getItem(k);if(nk==='lunaris-cloak'&&v==='pola'+'ris')v='lunaris';localStorage.setItem(nk,v)}
+localStorage.removeItem(k)})}catch(e){}})();
+</script>
 <meta name="referrer" content="no-referrer">
 <link rel="stylesheet" href="vendor/fa/css/all.min.css">
 <style>
@@ -424,7 +431,7 @@ html.rainon #bgimg{background-image:none!important;filter:none;inset:0}
 </style>
 <script>
 // ---------- theme (runs before paint so saved colors don't flash) ----------
-var THEMES=[{n:'Polaris',bg:'#070f20',ac:'#a8defc'},{n:'Aurora',bg:'#06171a',ac:'#6ee7c8'},{n:'Dusk',bg:'#150a26',ac:'#c4a0ff'},{n:'Ember',bg:'#1a0d0b',ac:'#ffb27a'},{n:'Rose',bg:'#1e0b17',ac:'#ff9ccf'},{n:'Slate',bg:'#0d0f12',ac:'#d5dae3'},{n:'Daylight',bg:'#e8f0fa',ac:'#2b7bd0'}];
+var THEMES=[{n:'Lunaris',bg:'#070f20',ac:'#a8defc'},{n:'Aurora',bg:'#06171a',ac:'#6ee7c8'},{n:'Dusk',bg:'#150a26',ac:'#c4a0ff'},{n:'Ember',bg:'#1a0d0b',ac:'#ffb27a'},{n:'Rose',bg:'#1e0b17',ac:'#ff9ccf'},{n:'Slate',bg:'#0d0f12',ac:'#d5dae3'},{n:'Daylight',bg:'#e8f0fa',ac:'#2b7bd0'}];
 var INKRGB='234,246,255',ACRGB='168,222,252',SDRGB='4,9,19';
 function hex2rgb(h){h=String(h).replace('#','');if(h.length===3)h=h.replace(/./g,'$&$&');var n=parseInt(h,16);return[n>>16&255,n>>8&255,n&255]}
 function mixc(a,b,t){return a.map(function(v,i){return Math.round(v+(b[i]-v)*t)})}
@@ -440,7 +447,7 @@ function applyTheme(bg,ac){
   INKRGB=ink.join(',');ACRGB=A.join(',');SDRGB=sd.join(',');
 }
 var STARICON="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23a8defc' d='M12 1l2.4 8.6L23 12l-8.6 2.4L12 23l-2.4-8.6L1 12l8.6-2.4z'/%3E%3C/svg%3E";
-var CLOAKS=[{id:'polaris',n:'Polaris',t:'Polaris',i:''},
+var CLOAKS=[{id:'lunaris',n:'Lunaris',t:'Lunaris',i:''},
  {id:'google',n:'Google',t:'Google',i:'https://www.google.com/favicon.ico'},
  {id:'classroom',n:'Classroom',t:'Classes',i:'https://ssl.gstatic.com/classroom/favicon.png'},
  {id:'clever',n:'Clever',t:'Clever | Portal',i:'https://www.google.com/s2/favicons?domain=clever.com&sz=64'},
@@ -451,8 +458,8 @@ var CLOAKS=[{id:'polaris',n:'Polaris',t:'Polaris',i:''},
  {id:'bing',n:'Bing',t:'Bing',i:'https://www.bing.com/sa/simg/favicon-2x.ico'}];
 function applyCloak(id){var c=CLOAKS.filter(function(x){return x.id===id})[0]||CLOAKS[0],l=document.getElementById('favicon');
   document.title=c.t;if(!l){l=document.createElement('link');l.id='favicon';l.rel='icon';document.head.appendChild(l)}l.removeAttribute('type');l.href=c.i||STARICON}
-var CK='polaris';try{CK=localStorage.getItem('polaris-cloak')||'polaris'}catch(e){}
-if(!CLOAKS.some(function(c){return c.id===CK}))CK='polaris';
+var CK='lunaris';try{CK=localStorage.getItem('lunaris-cloak')||'lunaris'}catch(e){}
+if(!CLOAKS.some(function(c){return c.id===CK}))CK='lunaris';
 applyCloak(CK);if(window.__decoyOn)window.__decoyHead();
 var FONT=null;
 function fontHref(family,weights){var ws=(weights||[]).filter(function(w){return[400,500,600,700,800].indexOf(w)>=0});
@@ -464,7 +471,7 @@ function applyFont(f,done){
   l.onload=function(){if(old)old.remove();l.id='gfont';st.setProperty('--font','"'+f.family.replace(/["\\]/g,'')+'"');if(done)done(true)};
   l.onerror=function(){l.remove();if(done)done(false)};
   document.head.appendChild(l)}
-try{var _f=JSON.parse(localStorage.getItem('polaris-font'));if(_f&&typeof _f.family==='string'){FONT=_f;applyFont(FONT)}}catch(e){}
+try{var _f=JSON.parse(localStorage.getItem('lunaris-font'));if(_f&&typeof _f.family==='string'){FONT=_f;applyFont(FONT)}}catch(e){}
 var DEFAULT_TH={bg:'#0d0f12',ac:'#d5dae3'};
 var DEFAULT_BG={url:'https://images.pexels.com/photos/24604748/pexels-photo-24604748.jpeg?cs=srgb&dl=pexels-willianjusten-24604748.jpg&fm=jpg',dim:.03,blur:7,rain:true,rv:2};
 var BG={url:DEFAULT_BG.url,dim:DEFAULT_BG.dim,blur:DEFAULT_BG.blur,rain:DEFAULT_BG.rain,rv:2};
@@ -473,10 +480,10 @@ function applyBg(){var st=document.documentElement.style,cl=document.documentEle
   if(BG.url){st.setProperty('--bgimg',cssUrl(BG.url));st.setProperty('--bgdim',BG.dim);st.setProperty('--bgblur',BG.blur+'px');cl.add('hasbg')}else{st.removeProperty('--bgimg');cl.remove('hasbg')}
   cl.toggle('rainset',!!(BG.url&&BG.rain))
   if(typeof rainSync==='function')rainSync()}
-try{var _b=JSON.parse(localStorage.getItem('polaris-bg'));if(_b&&typeof _b.url==='string'&&(_b.url===''||/^(https?:\/\/|data:image\/)/i.test(_b.url))){BG={url:_b.url,dim:typeof _b.dim==='number'?Math.min(.85,Math.max(0,_b.dim)):.4,blur:typeof _b.blur==='number'?Math.min(30,Math.max(0,_b.blur)):0,rain:_b.rv===2&&_b.rain===true,rv:2};applyBg()}}catch(e){}
+try{var _b=JSON.parse(localStorage.getItem('lunaris-bg'));if(_b&&typeof _b.url==='string'&&(_b.url===''||/^(https?:\/\/|data:image\/)/i.test(_b.url))){BG={url:_b.url,dim:typeof _b.dim==='number'?Math.min(.85,Math.max(0,_b.dim)):.4,blur:typeof _b.blur==='number'?Math.min(30,Math.max(0,_b.blur)):0,rain:_b.rv===2&&_b.rain===true,rv:2};applyBg()}}catch(e){}
 applyBg();
 var TH={bg:DEFAULT_TH.bg,ac:DEFAULT_TH.ac};
-try{var _s=JSON.parse(localStorage.getItem('polaris-theme'));if(_s&&/^#[0-9a-f]{6}$/i.test(_s.bg)&&/^#[0-9a-f]{6}$/i.test(_s.ac))TH=_s}catch(e){}
+try{var _s=JSON.parse(localStorage.getItem('lunaris-theme'));if(_s&&/^#[0-9a-f]{6}$/i.test(_s.bg)&&/^#[0-9a-f]{6}$/i.test(_s.ac))TH=_s}catch(e){}
 applyTheme(TH.bg,TH.ac);
 </script>
 </head>
@@ -611,7 +618,7 @@ footer small{display:block;width:100%;font-size:12px;opacity:.7;margin-top:6px}
 </div>
 </template>
 <script>
-// Landing page that looks like an ordinary education site; pressing any button or link opens Polaris.
+// Landing page that looks like an ordinary education site; pressing any button or link opens Lunaris.
 (function(){
   var host=document.getElementById('decoy'),tpl=document.getElementById('decoy-tpl');
   if(window.top!==window.self){host.remove();tpl.remove();return} // a window cloak already disguises the tab
@@ -629,7 +636,7 @@ footer small{display:block;width:100%;font-size:12px;opacity:.7;margin-top:6px}
   function enter(){
     if(done)return;done=true;window.__decoyOn=false;
     frozen.forEach(function(el){el.inert=false});
-    if(typeof applyCloak==='function'&&typeof CK!=='undefined')applyCloak(CK);else document.title='Polaris';
+    if(typeof applyCloak==='function'&&typeof CK!=='undefined')applyCloak(CK);else document.title='Lunaris';
     host.classList.add('out');setTimeout(function(){host.remove();tpl.remove()},220)}
   root.addEventListener('click',function(e){var t=e.target;if(t.closest&&t.closest('a,button')){e.preventDefault();enter()}});
 })();
@@ -642,7 +649,7 @@ footer small{display:block;width:100%;font-size:12px;opacity:.7;margin-top:6px}
 <div class="top">
   <div class="brand">
     <svg class="star" width="22" height="22" viewBox="0 0 24 24"><path d="M12 1l2.4 8.6L23 12l-8.6 2.4L12 23l-2.4-8.6L1 12l8.6-2.4z"/></svg>
-    Polaris
+    Lunaris
   </div>
   <span id="clock"></span>
 </div>
@@ -650,7 +657,7 @@ footer small{display:block;width:100%;font-size:12px;opacity:.7;margin-top:6px}
 <main>
   <div class="hero" id="hero">
     <svg class="star" viewBox="0 0 24 24"><path d="M12 1l2.4 8.6L23 12l-8.6 2.4L12 23l-2.4-8.6L1 12l8.6-2.4z"/></svg>
-    <h1>Polaris</h1>
+    <h1>Lunaris</h1>
   </div>
   <div class="pills">
     <button class="pill" data-p="Games">Projects</button>
@@ -693,18 +700,18 @@ footer small{display:block;width:100%;font-size:12px;opacity:.7;margin-top:6px}
     <form class="urlbox" id="bform" autocomplete="off">
       <input id="baddr" type="text" placeholder="enter url" aria-label="Address" spellcheck="false" autocapitalize="off">
       <button class="bb" type="button" id="bfull" aria-label="Fullscreen"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3"/></svg></button>
-      <button class="bb" type="button" id="bhome" aria-label="Back to Polaris"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10h-6v-6H9v6H3z"/></svg></button>
+      <button class="bb" type="button" id="bhome" aria-label="Back to Lunaris"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10h-6v-6H9v6H3z"/></svg></button>
     </form>
   </div>
   <div class="bview" id="bview">
     <div class="ntp" id="ntp">
-      <div class="nh"><svg class="star" viewBox="0 0 24 24"><path d="M12 1l2.4 8.6L23 12l-8.6 2.4L12 23l-2.4-8.6L1 12l8.6-2.4z"/></svg><h2>Polaris</h2></div>
+      <div class="nh"><svg class="star" viewBox="0 0 24 24"><path d="M12 1l2.4 8.6L23 12l-8.6 2.4L12 23l-2.4-8.6L1 12l8.6-2.4z"/></svg><h2>Lunaris</h2></div>
       <form class="nsearch" id="nform"><input id="nq" type="text" placeholder="Search the web or enter a URL" aria-label="Search the web or enter a URL" spellcheck="false" autocapitalize="off"></form>
       <div class="quick" id="quick"></div>
     </div>
     <div class="bmsg" id="bmsg" role="alert" hidden></div>
   </div>
-  <button class="bstar" id="bstar" aria-label="Exit to Polaris home" title="Back to Polaris"><svg class="star" viewBox="0 0 24 24"><path d="M12 1l2.4 8.6L23 12l-8.6 2.4L12 23l-2.4-8.6L1 12l8.6-2.4z"/></svg></button>
+  <button class="bstar" id="bstar" aria-label="Exit to Lunaris home" title="Back to Lunaris"><svg class="star" viewBox="0 0 24 24"><path d="M12 1l2.4 8.6L23 12l-8.6 2.4L12 23l-2.4-8.6L1 12l8.6-2.4z"/></svg></button>
 </section>
 
 <section class="page" id="settings" aria-label="Settings">
@@ -745,7 +752,7 @@ footer small{display:block;width:100%;font-size:12px;opacity:.7;margin-top:6px}
     </div>
     <div class="card">
       <h3><i class="fa-solid fa-font"></i>Font</h3>
-      <p>Search Google Fonts and use any font across Polaris. Saved on this device.</p>
+      <p>Search Google Fonts and use any font across Lunaris. Saved on this device.</p>
       <div class="brow">
         <input type="search" id="fq" placeholder="Search Google Fonts (e.g. Poppins)" aria-label="Search Google Fonts" spellcheck="false" autocomplete="off">
         <button class="chip" id="freset" type="button">Default font</button>
@@ -756,7 +763,7 @@ footer small{display:block;width:100%;font-size:12px;opacity:.7;margin-top:6px}
     </div>
     <div class="card">
       <h3><i class="fa-solid fa-user-secret"></i>Tab Hide</h3>
-      <p>Make Polaris look like something harmless in your tab bar.</p>
+      <p>Make Lunaris look like something harmless in your tab bar.</p>
       <div class="cgrid" id="cgrid"></div>
     </div>
     <div class="card">
@@ -785,7 +792,7 @@ footer small{display:block;width:100%;font-size:12px;opacity:.7;margin-top:6px}
     </div>
     <div class="card">
       <h3><i class="fa-solid fa-window-restore"></i>Window hide</h3>
-      <p>The Privacy button opens Polaris inside a disguised window, using your Tab Hide title and icon. If nothing opens, allow pop-ups for this site.</p>
+      <p>The Privacy button opens Lunaris inside a disguised window, using your Tab Hide title and icon. If nothing opens, allow pop-ups for this site.</p>
       <div class="seg" id="cmode" role="group" aria-label="Hide method"><button type="button" data-m="about">about:blank</button><button type="button" data-m="blob">blob:</button></div>
       <p id="cmodehint"></p>
       <button class="chip" id="cloakbtn" type="button">Open now</button>
@@ -877,7 +884,7 @@ footer small{display:block;width:100%;font-size:12px;opacity:.7;margin-top:6px}
     <div class="cauth" id="cauth">
       <form class="acard" id="aform">
         <h3 id="atitle">Welcome back</h3>
-        <p id="asub">Log in to chat with everyone on Polaris.</p>
+        <p id="asub">Log in to chat with everyone on Lunaris.</p>
         <div class="atabs"><button type="button" class="on" id="atl">Log in</button><button type="button" id="ats">Create account</button></div>
         <input id="au" placeholder="Username" autocomplete="username" maxlength="20" spellcheck="false" autocapitalize="off" aria-label="Username">
         <input id="ap" type="password" placeholder="Password" autocomplete="current-password" maxlength="100" aria-label="Password">
@@ -951,13 +958,13 @@ function sendPos(x,y){if(room)room.presence({x:x,y:y}).catch(function(){})}
 addEventListener('pointermove',function(e){mx=e.clientX;my=e.clientY;sendPos(+(mx/W).toFixed(3),+(my/H).toFixed(3))});
 document.addEventListener('pointerleave',function(){mx=my=-1e3;sendPos(null,null)});
 
-// ---------- online users (counted by the server: everyone who has Polaris open right now) ----------
+// ---------- online users (counted by the server: everyone who has Lunaris open right now) ----------
 var onEl=document.getElementById('on');
 function setOnline(n){if(+onEl.textContent===n)return;onEl.textContent=n;onEl.classList.remove('bump');void onEl.offsetWidth;onEl.classList.add('bump')}
-var VID=null;try{VID=localStorage.getItem('polaris-vid')}catch(e){}
+var VID=null;try{VID=localStorage.getItem('lunaris-vid')}catch(e){}
 if(!VID||!/^[a-f0-9]{24}$/.test(VID)){
   VID=Array.prototype.map.call(crypto.getRandomValues(new Uint8Array(12)),function(b){return('0'+b.toString(16)).slice(-2)}).join('');
-  try{localStorage.setItem('polaris-vid',VID)}catch(e){}}
+  try{localStorage.setItem('lunaris-vid',VID)}catch(e){}}
 function presencePing(){
   fetch('/api/presence/ping',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:VID}),keepalive:true})
     .then(function(r){return r.ok?r.json():null}).then(function(j){if(j&&typeof j.online==='number')setOnline(Math.max(1,j.online))}).catch(function(){})}
@@ -1027,13 +1034,13 @@ function hostOf(u){try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){
 function initProxy(){
   if(ctrlP)return ctrlP;
   ctrlP=(async function(){
-    if(window.noProxy||typeof initBootstrap!=='function')throw new Error('The proxy backend is not running. Start Polaris with "npm start" (node server.js) and open http://localhost:3030 instead of opening index.html directly.');
-    if(!window.isSecureContext)throw new Error('The proxy needs a secure context. Open Polaris over https:// or http://localhost.');
+    if(window.noProxy||typeof initBootstrap!=='function')throw new Error('The proxy backend is not running. Start Lunaris with "npm start" (node server.js) and open http://localhost:3030 instead of opening index.html directly.');
+    if(!window.isSecureContext)throw new Error('The proxy needs a secure context. Open Lunaris over https:// or http://localhost.');
     return await initBootstrap();
   })();
   ctrlP.catch(function(){ctrlP=null});
   return ctrlP}
-function saveTabs(){try{localStorage.setItem('polaris-tabs',JSON.stringify({a:tabs.indexOf(cur),t:tabs.map(function(t){return{u:t.url,n:t.title}})}))}catch(e){}}
+function saveTabs(){try{localStorage.setItem('lunaris-tabs',JSON.stringify({a:tabs.indexOf(cur),t:tabs.map(function(t){return{u:t.url,n:t.title}})}))}catch(e){}}
 function setTitle(t,s){if(t.title===s)return;t.title=s;t.el.querySelector('.tt').textContent=s;t.el.title=s;saveTabs()}
 function sync(){
   ntp.hidden=!!(cur&&(cur.ifr||cur.url));
@@ -1086,7 +1093,7 @@ async function go(t,raw){
 }
 setInterval(function(){tabs.forEach(function(t){if(!t.ifr)return;try{var d=t.ifr.contentDocument;if(d&&d.title)setTitle(t,d.title)}catch(e){}})},800);
 // tabs survive reloads and closing the browser; they wake up when you open them
-(function(){try{var s=JSON.parse(localStorage.getItem('polaris-tabs'));
+(function(){try{var s=JSON.parse(localStorage.getItem('lunaris-tabs'));
   if(s&&Array.isArray(s.t)&&s.t.length){s.t.slice(0,12).forEach(function(x){makeTab(typeof x.u==='string'&&/^https?:\/\//i.test(x.u)?x.u:'',typeof x.n==='string'?x.n.slice(0,200):'')});activate(tabs[Math.min(Math.max(0,s.a|0),tabs.length-1)])}}catch(e){}})();document.getElementById('tabadd').addEventListener('click',function(){newTab()});
 document.getElementById('bform').addEventListener('submit',function(e){e.preventDefault();if(!cur)newTab();go(cur,baddr.value);baddr.blur()});
 baddr.addEventListener('focus',function(){baddr.select()});
@@ -1104,7 +1111,7 @@ if(gotoUrl){history.replaceState(null,'',location.pathname);setTimeout(function(
 // ---------- settings (theme) ----------
 var sp=document.getElementById('settings'),cbg=document.getElementById('cbg'),cac=document.getElementById('cac'),presetsEl=document.getElementById('presets');
 function syncTheme(){cbg.value=TH.bg;cac.value=TH.ac;[].forEach.call(presetsEl.children,function(b,i){b.classList.toggle('on',THEMES[i].bg.toLowerCase()===TH.bg.toLowerCase()&&THEMES[i].ac.toLowerCase()===TH.ac.toLowerCase())})}
-function setTheme(bg,ac){TH={bg:bg,ac:ac};applyTheme(bg,ac);try{localStorage.setItem('polaris-theme',JSON.stringify(TH))}catch(e){}syncTheme()}
+function setTheme(bg,ac){TH={bg:bg,ac:ac};applyTheme(bg,ac);try{localStorage.setItem('lunaris-theme',JSON.stringify(TH))}catch(e){}syncTheme()}
 THEMES.forEach(function(t){var b=document.createElement('button'),sw=document.createElement('i');b.type='button';b.className='preset';sw.style.background='linear-gradient(135deg,'+t.bg+' 50%,'+t.ac+' 50%)';b.appendChild(sw);b.appendChild(document.createTextNode(t.n));b.addEventListener('click',function(){setTheme(t.bg,t.ac)});presetsEl.appendChild(b)});
 cbg.addEventListener('input',function(){setTheme(cbg.value,cac.value)});
 cac.addEventListener('input',function(){setTheme(cbg.value,cac.value)});
@@ -1116,7 +1123,7 @@ syncTheme();
 var BGS=['https://images.pexels.com/photos/4826377/pexels-photo-4826377.jpeg?cs=srgb&dl=pexels-kienvirak-4826377.jpg&fm=jpg','https://images.pexels.com/photos/24604748/pexels-photo-24604748.jpeg?cs=srgb&dl=pexels-willianjusten-24604748.jpg&fm=jpg','https://cdn.wallpapersafari.com/0/42/6EK9OD.jpg','https://the4kwallpaperfactory.com/wp-content/uploads/2025/04/dracolosse-3-scaled.jpg','https://c4.wallpaperflare.com/wallpaper/235/315/793/minecraft-beautiful-desktop-wallpaper-preview.jpg','https://images3.alphacoders.com/135/1353838.png'];
 var bgsEl=document.getElementById('bgs'),bgUrl=document.getElementById('bgurl'),bgMsg=document.getElementById('bgmsg'),bgDim=document.getElementById('bgdim'),bgBlur=document.getElementById('bgblur'),rainSw=document.getElementById('rainsw'),bgBuilt=false;
 function bgmsg(t){bgMsg.textContent=t||''}
-function saveBg(){try{localStorage.setItem('polaris-bg',JSON.stringify(BG))}catch(e){bgmsg('That image is too big to remember, so it will reset when you reload.')}}
+function saveBg(){try{localStorage.setItem('lunaris-bg',JSON.stringify(BG))}catch(e){bgmsg('That image is too big to remember, so it will reset when you reload.')}}
 function syncBg(){[].forEach.call(bgsEl.children,function(b){b.classList.toggle('on',(b.dataset.u||'')===BG.url)});bgDim.value=Math.round(BG.dim*100);bgBlur.value=BG.blur;rainSw.setAttribute('aria-checked',String(!!BG.rain));bgUrl.value=/^data:/.test(BG.url)?'':BG.url}
 function setBg(url){
   if(!url){BG.url='';applyBg();saveBg();syncBg();bgmsg('');return}
@@ -1145,9 +1152,9 @@ document.getElementById('bgfile').addEventListener('change',function(){
   r.readAsDataURL(f)});
 
 // ---------- leave warning ----------
-var LV=false;try{LV=localStorage.getItem('polaris-leave')==='1'}catch(e){}
+var LV=false;try{LV=localStorage.getItem('lunaris-leave')==='1'}catch(e){}
 var lvsw=document.getElementById('lvsw');lvsw.setAttribute('aria-checked',String(LV));
-lvsw.addEventListener('click',function(){LV=!LV;lvsw.setAttribute('aria-checked',String(LV));try{localStorage.setItem('polaris-leave',LV?'1':'0')}catch(e){}});
+lvsw.addEventListener('click',function(){LV=!LV;lvsw.setAttribute('aria-checked',String(LV));try{localStorage.setItem('lunaris-leave',LV?'1':'0')}catch(e){}});
 addEventListener('beforeunload',function(e){if(LV){e.preventDefault();e.returnValue=''}});
 
 // ---------- game fullscreen ----------
@@ -1168,7 +1175,7 @@ async function rainBuild(){
   if(rainBusy||!rainWanted())return;
   rainBusy=true;var key=rainKey();
   try{
-    var mod=await import('./vendor/rain/polaris-rain.js');
+    var mod=await import('./vendor/rain/lunaris-rain.js');
     if(!rainFx)rainFx=mod.createRainFx(document.getElementById('rain'));
     await rainFx.setScene(BG.url,BG.blur);rainSig=key;rainFails=0;
     if(rainWanted()){rainFx.start();document.documentElement.classList.add('rainon')}
@@ -1219,11 +1226,11 @@ function setFont(family,weights){
   fmsg('Loading \u201c'+family+'\u201d\u2026',true);
   applyFont({family:family,weights:weights},function(ok){
     if(!ok){fmsg('Couldn\u2019t load \u201c'+family+'\u201d from Google Fonts. Check the spelling.');return}
-    FONT={family:family,weights:weights};try{localStorage.setItem('polaris-font',JSON.stringify(FONT))}catch(e){}
+    FONT={family:family,weights:weights};try{localStorage.setItem('lunaris-font',JSON.stringify(FONT))}catch(e){}
     fmsg('Using '+family,true);renderFonts()})}
 fq.addEventListener('input',function(){renderFonts()});
 fq.addEventListener('focus',loadFontList);
-document.getElementById('freset').addEventListener('click',function(){applyFont(null);FONT=null;try{localStorage.removeItem('polaris-font')}catch(e){}fmsg('Back to the default font.',true);renderFonts()});
+document.getElementById('freset').addEventListener('click',function(){applyFont(null);FONT=null;try{localStorage.removeItem('lunaris-font')}catch(e){}fmsg('Back to the default font.',true);renderFonts()});
 
 // ---------- tab cloak (disguise) ----------
 (function(){var g=document.getElementById('cgrid');
@@ -1233,13 +1240,13 @@ document.getElementById('freset').addEventListener('click',function(){applyFont(
     else if(c.id==='newtab')ic.innerHTML='<i class="fa-solid fa-plus"></i>';
     else{var im=new Image();im.alt='';im.src=c.i;im.onerror=function(){ic.textContent='';var gi=document.createElement('i');gi.className='fa-solid fa-globe';ic.appendChild(gi)};ic.appendChild(im)}
     b.appendChild(ic);b.appendChild(n);
-    b.addEventListener('click',function(){CK=c.id;applyCloak(CK);updateCloakWin();try{localStorage.setItem('polaris-cloak',CK)}catch(e){}[].forEach.call(g.children,function(x){x.classList.toggle('on',x.dataset.id===CK)})});
+    b.addEventListener('click',function(){CK=c.id;applyCloak(CK);updateCloakWin();try{localStorage.setItem('lunaris-cloak',CK)}catch(e){}[].forEach.call(g.children,function(x){x.classList.toggle('on',x.dataset.id===CK)})});
     g.appendChild(b)})})();
 
 // ---------- panic button ----------
 var PANIC={hk:null,url:'https://www.google.com/'},capturing=false,hkv=document.getElementById('hkv'),purl=document.getElementById('purl'),pmsg=document.getElementById('pmsg');
-try{var _p=JSON.parse(localStorage.getItem('polaris-panic'));if(_p){PANIC.hk=_p.hk||null;PANIC.url=_p.url||PANIC.url}}catch(e){}
-function savePanic(){try{localStorage.setItem('polaris-panic',JSON.stringify(PANIC))}catch(e){}}
+try{var _p=JSON.parse(localStorage.getItem('lunaris-panic'));if(_p){PANIC.hk=_p.hk||null;PANIC.url=_p.url||PANIC.url}}catch(e){}
+function savePanic(){try{localStorage.setItem('lunaris-panic',JSON.stringify(PANIC))}catch(e){}}
 function hkName(h){return/^Key/.test(h.code)?h.code.slice(3):/^Digit/.test(h.code)?h.code.slice(5):h.key.length===1?h.key.toUpperCase():h.key}
 function hkText(h){return h?(h.ctrl?'Ctrl + ':'')+(h.alt?'Alt + ':'')+(h.shift?'Shift + ':'')+(h.meta?'Meta + ':'')+hkName(h):'not set'}
 function showHk(){hkv.textContent=capturing?'press keys\u2026':hkText(PANIC.hk);hkv.classList.toggle('cap',capturing)}
@@ -1268,9 +1275,9 @@ document.getElementById('psave').addEventListener('click',function(){var u=normU
 document.getElementById('ptest').addEventListener('click',function(){var u=normUrl(purl.value);if(!u){pnote('Enter a valid web address.');return}window.open(u,'_blank','noopener')});
 // ---------- tab cloak ----------
 var CMODE='about',cloakWin=null;
-try{CMODE=localStorage.getItem('polaris-cmode')==='blob'?'blob':'about'}catch(e){}
+try{CMODE=localStorage.getItem('lunaris-cmode')==='blob'?'blob':'about'}catch(e){}
 function escH(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-function cloakMeta(){var c=CLOAKS.filter(function(x){return x.id===CK})[0];return c&&c.id!=='polaris'?c:null}
+function cloakMeta(){var c=CLOAKS.filter(function(x){return x.id===CK})[0];return c&&c.id!=='lunaris'?c:null}
 function cloakHtml(){
   var c=cloakMeta(),src=location.href.split('#')[0].split('?')[0];
   return'<!doctype html><html><head><meta charset="utf-8">'+(c?'<title>'+escH(c.t)+'</title><link id="ic" rel="icon" href="'+escH(c.i)+'">':'')+
@@ -1297,15 +1304,15 @@ function cloak(){
   cloakWin=w}
 function syncCmode(){
   [].forEach.call(document.querySelectorAll('#cmode button'),function(b){b.classList.toggle('on',b.dataset.m===CMODE)});
-  document.getElementById('cmodehint').textContent=CMODE==='blob'?'Opens a blob: page. The address bar shows a long blob: link instead of about:blank.':'Opens an empty about:blank tab with Polaris loaded inside it.'}
-[].forEach.call(document.querySelectorAll('#cmode button'),function(b){b.addEventListener('click',function(){CMODE=b.dataset.m;try{localStorage.setItem('polaris-cmode',CMODE)}catch(e){}syncCmode()})});
+  document.getElementById('cmodehint').textContent=CMODE==='blob'?'Opens a blob: page. The address bar shows a long blob: link instead of about:blank.':'Opens an empty about:blank tab with Lunaris loaded inside it.'}
+[].forEach.call(document.querySelectorAll('#cmode button'),function(b){b.addEventListener('click',function(){CMODE=b.dataset.m;try{localStorage.setItem('lunaris-cmode',CMODE)}catch(e){}syncCmode()})});
 syncCmode();document.getElementById('cloakbtn').addEventListener('click',cloak);
 document.getElementById('bstar').addEventListener('click',function(){show('Home')});
 
 // ---------- music ----------
 var MU={view:'browse',detail:null,prev:'browse',sections:null,albums:{},lib:{liked:[],pls:[],vol:.8},cur:null,queue:[],qi:-1,started:false,sq:'',stm:0,seeking:false,errs:0};
-try{var _m=JSON.parse(localStorage.getItem('polaris-music'));if(_m){MU.lib.liked=Array.isArray(_m.liked)?_m.liked.slice(0,500):[];MU.lib.pls=Array.isArray(_m.pls)?_m.pls.slice(0,50):[];if(typeof _m.vol==='number')MU.lib.vol=Math.min(1,Math.max(0,_m.vol))}}catch(e){}
-function saveLib(){try{localStorage.setItem('polaris-music',JSON.stringify(MU.lib))}catch(e){}}
+try{var _m=JSON.parse(localStorage.getItem('lunaris-music'));if(_m){MU.lib.liked=Array.isArray(_m.liked)?_m.liked.slice(0,500):[];MU.lib.pls=Array.isArray(_m.pls)?_m.pls.slice(0,50):[];if(typeof _m.vol==='number')MU.lib.vol=Math.min(1,Math.max(0,_m.vol))}}catch(e){}
+function saveLib(){try{localStorage.setItem('lunaris-music',JSON.stringify(MU.lib))}catch(e){}}
 var mbody=document.getElementById('mbody'),mtitle=document.getElementById('mtitle'),mplsEl=document.getElementById('mpls'),audio=new Audio(),
     mbPlay=document.getElementById('mbPlay'),mbSeek=document.getElementById('mbSeek'),mbCur=document.getElementById('mbCur'),mbDur=document.getElementById('mbDur'),mbVol=document.getElementById('mbVol'),
     mbLike=document.getElementById('mbLike'),mdlg=document.getElementById('mdlg'),mdname=document.getElementById('mdname'),dockMusic=document.querySelector('.dock button[data-p=Music]');
@@ -1313,8 +1320,8 @@ audio.preload='auto';audio.volume=MU.lib.vol;mbVol.value=Math.round(MU.lib.vol*1
 function mapi(path){
   return fetch('/api/music/'+path).then(function(r){
     return r.json().catch(function(){return{}}).then(function(j){
-      if(!r.ok)throw new Error(r.status===404?'Music server not found. Start Polaris with "npm start" and open http://localhost:3030.':(j.error||'Music error ('+r.status+')'));return j})
-  },function(){throw new Error('Music server not reachable. Start Polaris with "npm start" and open http://localhost:3030.')})}
+      if(!r.ok)throw new Error(r.status===404?'Music server not found. Start Lunaris with "npm start" and open http://localhost:3030.':(j.error||'Music error ('+r.status+')'));return j})
+  },function(){throw new Error('Music server not reachable. Start Lunaris with "npm start" and open http://localhost:3030.')})}
 function fmtT(s){s=Math.max(0,Math.floor(s||0));return Math.floor(s/60)+':'+('0'+s%60).slice(-2)}
 function ico(cls){var i=document.createElement('i');i.className=cls;i.setAttribute('aria-hidden','true');return i}
 function artImg(box,url,fb){box.textContent='';if(url){var im=new Image();im.alt='';im.loading='lazy';im.src=url;im.onerror=function(){box.textContent='';box.appendChild(ico(fb||'fa-solid fa-music'))};box.appendChild(im)}else box.appendChild(ico(fb||'fa-solid fa-music'))}
@@ -1475,15 +1482,15 @@ var cp=document.getElementById('chat'),cmsgs=document.getElementById('cmsgs'),ci
     au=document.getElementById('au'),ap=document.getElementById('ap'),aerr=document.getElementById('aerr'),abtn=document.getElementById('abtn'),
     CH=[['general','#','Talk about anything'],['links','\u2197','Sites worth sharing']],
     cs={tok:null,me:null,ch:'general',msgs:{},unread:{},es:null,mode:'login'};
-try{cs.tok=localStorage.getItem('polaris-chat')}catch(e){}
+try{cs.tok=localStorage.getItem('lunaris-chat')}catch(e){}
 function el(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;return e}
 function capi(path,body){
   var h={'Content-Type':'application/json'};if(cs.tok)h.Authorization='Bearer '+cs.tok;
   return fetch('/api/chat/'+path,{method:body?'POST':'GET',headers:h,body:body?JSON.stringify(body):undefined}).then(function(r){
     return r.json().then(function(j){return j},function(){return{}}).then(function(j){
-      if(!r.ok){var e=new Error(r.status===404?'Chat server not found. Start Polaris with "npm start" and open http://localhost:3030.':(j.error||'Chat error ('+r.status+')'));e.status=r.status;throw e}
+      if(!r.ok){var e=new Error(r.status===404?'Chat server not found. Start Lunaris with "npm start" and open http://localhost:3030.':(j.error||'Chat error ('+r.status+')'));e.status=r.status;throw e}
       return j})
-  },function(){throw new Error('Chat server not reachable. Start Polaris with "npm start" and open http://localhost:3030.')})}
+  },function(){throw new Error('Chat server not reachable. Start Lunaris with "npm start" and open http://localhost:3030.')})}
 function avatar(n,name,hue){n.textContent=name.charAt(0);n.style.background='hsl('+hue+',70%,74%)'}
 function renderChans(){
   var box=document.getElementById('chans');box.textContent='';
@@ -1560,23 +1567,23 @@ function showAuth(err){
   cauth.hidden=false;document.getElementById('cuser').hidden=true;cin.disabled=true;aerr.textContent=err||'';
   setTimeout(function(){au.focus({preventScroll:true})},80)}
 function sessionEnded(){
-  clearTimeout(cs.rt);if(cs.es){cs.es.close();cs.es=null}cs.me=null;cs.tok=null;cs.msgs={};cs.unread={};try{localStorage.removeItem('polaris-chat')}catch(e){}
+  clearTimeout(cs.rt);if(cs.es){cs.es.close();cs.es=null}cs.me=null;cs.tok=null;cs.msgs={};cs.unread={};try{localStorage.removeItem('lunaris-chat')}catch(e){}
   document.getElementById('cmembers').textContent='';cmsgs.textContent='';showAuth('Session expired. Please log in again.')}
 function openChat(){
   if(cs.me){cs.unread[cs.ch]=0;renderChans();renderMsgs(true);return}
   if(!cs.tok){showAuth();return}
-  capi('me').then(function(j){startChat(j.user)}).catch(function(e){if(e.status===401){cs.tok=null;try{localStorage.removeItem('polaris-chat')}catch(x){}showAuth()}else showAuth(e.message)})}
+  capi('me').then(function(j){startChat(j.user)}).catch(function(e){if(e.status===401){cs.tok=null;try{localStorage.removeItem('lunaris-chat')}catch(x){}showAuth()}else showAuth(e.message)})}
 function authMode(m){
   cs.mode=m;document.getElementById('atl').classList.toggle('on',m==='login');document.getElementById('ats').classList.toggle('on',m==='signup');
   document.getElementById('atitle').textContent=m==='login'?'Welcome back':'Join the chat';
-  document.getElementById('asub').textContent=m==='login'?'Log in to chat with everyone on Polaris.':'Pick a username and password. No email needed.';
+  document.getElementById('asub').textContent=m==='login'?'Log in to chat with everyone on Lunaris.':'Pick a username and password. No email needed.';
   abtn.textContent=m==='login'?'Log in':'Create account';ap.autocomplete=m==='login'?'current-password':'new-password';aerr.textContent=''}
 document.getElementById('atl').addEventListener('click',function(){authMode('login')});
 document.getElementById('ats').addEventListener('click',function(){authMode('signup')});
 document.getElementById('aform').addEventListener('submit',function(e){
   e.preventDefault();abtn.disabled=true;aerr.textContent='';
   capi(cs.mode,{username:au.value.trim(),password:ap.value}).then(function(j){
-    cs.tok=j.token;try{localStorage.setItem('polaris-chat',cs.tok)}catch(x){}ap.value='';startChat(j.user)
+    cs.tok=j.token;try{localStorage.setItem('lunaris-chat',cs.tok)}catch(x){}ap.value='';startChat(j.user)
   }).catch(function(err){aerr.textContent=err.message}).then(function(){abtn.disabled=false})});
 document.getElementById('cform').addEventListener('submit',function(e){
   e.preventDefault();var text=cin.value.trim();if(!text||!cs.me)return;cin.value='';
@@ -1584,7 +1591,7 @@ document.getElementById('cform').addEventListener('submit',function(e){
     if(err.status===401)return sessionEnded();
     cin.value=text;var ph=cin.placeholder;cin.placeholder=err.message;setTimeout(function(){cin.placeholder=ph},2500)})});
 document.getElementById('clogout').addEventListener('click',function(){capi('logout',{}).catch(function(){}).then(function(){sessionEnded();aerr.textContent=''})});
-// links in chat open inside the Polaris browser
+// links in chat open inside the Lunaris browser
 cmsgs.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a');if(a){e.preventDefault();openInBrowser(a.href)}});
 function openInBrowser(url){show('Browser');var t=cur&&!cur.ifr&&!cur.url?cur:newTab();go(t,url)}
 
@@ -1607,7 +1614,7 @@ function show(n){
   if(n==='Settings'){buildBgs();loadFontList()}
   if(n==='Home'||any){panel.classList.remove('show');return}
   document.getElementById('pt').textContent=n;
-  document.getElementById('pd').textContent=n+' is coming soon to Polaris.';
+  document.getElementById('pd').textContent=n+' is coming soon to Lunaris.';
   panel.classList.add('show');
 }
 document.querySelectorAll('[data-p]').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.p)})});
