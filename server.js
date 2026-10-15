@@ -1,3 +1,4 @@
+import "./env.js"; // first, so settings from .env are in place before the other modules read them
 import http from "node:http";
 import https from "node:https";
 import dns from "node:dns/promises";
@@ -71,7 +72,10 @@ app.use((req, res, next) => {
 	next();
 });
 
-// gzip/deflate text, scripts, JSON and wasm (images, video and already-compressed files are skipped automatically)
+// brotli/gzip text, scripts, JSON and wasm (images, video and already-compressed files are skipped automatically). Game data
+// files have no compressible mime type, so they are listed by extension: Adventure Capitalist's webgl.data (94 MB) shrinks to about
+// 5 MB, and ROMs and Unity .data files to well under their size. Archives, .unityweb, .swf, mp3/ogg/mp4 and images stay as they are.
+const SQUEEZE = /\.(data|wasm|bin|rom|gba|gbc|gb|nes|sfc|smc|z64|n64|v64|nds|md|gen|sms|gg|iso|pck|mem|dat|obj|fbx|glb|gltf|tga|bmp|wav|aiff|ttf|otf|csv|txt|xml|mjs|map|assetbundle|unity3d|pak|sav|state)$/i;
 app.use(
 	compression({
 		threshold: 1024,
@@ -79,7 +83,7 @@ app.use(
 		filter: (req, res) => {
 			if (req.headers.range) return false; // partial downloads must stay byte-exact
 			if (req.path.startsWith("/api/chat/stream")) return false; // live chat stream
-			return compression.filter(req, res);
+			return compression.filter(req, res) || SQUEEZE.test(req.path);
 		},
 	}),
 );
@@ -248,7 +252,7 @@ app.use("/games", async (req, res, next) => {
 	// insert after <head> (or <html>/doctype) so the page keeps its rendering mode
 	const at = /<head[^>]*>/i.exec(page) || /<html[^>]*>/i.exec(page) || /^\s*<!doctype[^>]*>/i.exec(page);
 	const i = at ? at.index + at[0].length : 0;
-	res.set({ "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=604800" });
+	res.set({ "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800" }); // short, because the guard script inside can change
 	res.send(Buffer.from(page.slice(0, i) + GUARD + page.slice(i), "latin1"));
 });
 app.use(
@@ -258,8 +262,8 @@ app.use(
 		setHeaders(res, file) {
 			const rel = path.relative(import.meta.dirname, file).replace(/\\/g, "/");
 			if (rel === "index.html" || rel === "games.js") res.setHeader("Cache-Control", "no-cache");
-			else if (rel.startsWith("vendor/")) res.setHeader("Cache-Control", "public, max-age=2592000");
-			else if (rel.startsWith("games/")) res.setHeader("Cache-Control", "public, max-age=604800");
+			else if (rel.startsWith("vendor/")) res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
+			else if (rel.startsWith("games/")) res.setHeader("Cache-Control", "public, max-age=2592000, immutable"); // game files only change when the site is updated
 		},
 	}),
 );
